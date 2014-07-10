@@ -10,7 +10,6 @@ import (
 // port must be 80 becouse some rss clients require this
 const _LOCAL_ADDR = "zakup-robot.ru:80"
 
-// files
 const (
 	_FILE_FILTERS          = "filters.json"
 	_HASH_STORE_FILE       = "cache.json"
