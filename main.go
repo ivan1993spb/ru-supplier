@@ -7,9 +7,11 @@ import (
 	"os"
 )
 
+// port must be 80 becouse some rss clients require this
+const _LOCAL_ADDR = "zakup-robot.ru:80"
+
 const (
-	// port must be 80 becouse some rss clients require this
-	_LOCAL_ADDR            = "zakup-robot.ru:80"
+	_FILE_FILTERS          = "filters.json"
 	_HASH_STORE_FILE       = "cache.json"
 	_LOG_ERROR_FILE_NAME   = "error.zakup.log"
 	_LOG_WARNING_FILE_NAME = "warning.zakup.log"
