@@ -9,6 +9,16 @@ import (
 
 const _FILE_FILTERS = "filters.json"
 
+type ErrInvalidRegexp struct {
+	sect, ptrn string // section and pattern
+	err        error
+}
+
+func (e *ErrInvalidRegexp) Error() string {
+	return `invalid regexp filter in "` + e.sect + `": ` +
+		e.err.Error() + `; ` + e.ptrn
+}
+
 func filter(orders []*Order) []*Order {
 	if len(orders) == 0 {
 		return orders
@@ -52,8 +62,11 @@ func filter(orders []*Order) []*Order {
 				}
 			}
 		} else {
-			log.Warning.Println("filter(): invalid regexp",
-				pattern, ":", err)
+			log.Warning.Println(&ErrInvalidRegexp{
+				"All",
+				pattern,
+				err,
+			})
 		}
 	}
 	// filter each fields
@@ -68,8 +81,11 @@ func filter(orders []*Order) []*Order {
 				}
 			}
 		} else {
-			log.Warning.Println("filter(): invalid regexp",
-				pattern, ":", err)
+			log.Warning.Println(&ErrInvalidRegexp{
+				"OrderName",
+				pattern,
+				err,
+			})
 		}
 	}
 	for _, pattern := range patterns.OKDP {
@@ -83,8 +99,11 @@ func filter(orders []*Order) []*Order {
 				}
 			}
 		} else {
-			log.Warning.Println("filter(): invalid regexp",
-				pattern, ":", err)
+			log.Warning.Println(&ErrInvalidRegexp{
+				"OKDP",
+				pattern,
+				err,
+			})
 		}
 	}
 	for _, pattern := range patterns.OKPD {
@@ -98,8 +117,11 @@ func filter(orders []*Order) []*Order {
 				}
 			}
 		} else {
-			log.Warning.Println("filter(): invalid regexp",
-				pattern, ":", err)
+			log.Warning.Println(&ErrInvalidRegexp{
+				"OKPD",
+				pattern,
+				err,
+			})
 		}
 	}
 	for _, pattern := range patterns.OrganisationName {
@@ -113,8 +135,11 @@ func filter(orders []*Order) []*Order {
 				}
 			}
 		} else {
-			log.Warning.Println("filter(): invalid regexp",
-				pattern, ":", err)
+			log.Warning.Println(&ErrInvalidRegexp{
+				"OrganisationName",
+				pattern,
+				err,
+			})
 		}
 	}
 	return orders

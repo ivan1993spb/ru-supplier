@@ -2,7 +2,7 @@ package main
 
 import "html/template"
 
-var tmpl = template.Must(template.New("OK").Parse(`
+var tmpl = template.Must(template.New("tmpl").Parse(`
 <style>
 	div, h1 {margin: 10px 0px;}
 	ul {margin: 10px 15px;}
@@ -21,7 +21,7 @@ var tmpl = template.Must(template.New("OK").Parse(`
 		Лот {{.ExhibitionNumber}}
 	{{end}}
 </h1>
-<div><a href="{{.Link}}">{{.OrderName}}</a></div>
+<div><a href="{{.Link}}">{{.OrderName | "unknown name"}}</a></div>
 {{if .OKDP}}
 	<div><b>ОКДП:</b> {{.OKDP}}</div>
 {{end}}
@@ -30,12 +30,13 @@ var tmpl = template.Must(template.New("OK").Parse(`
 {{end}}
 <div>
 	<b>Сроки подачи заявки:</b>
-	с {{.StartDilingDate}} по <s>{{.FinishDilingDate}}</s>
+	с {{.StartDilingDate | "00.00.0000"}}
+	по <s>{{.FinishDilingDate | "00.00.0000"}}</s>
 </div>
 <div>
 	<b>Начальная (максимальная) цена:</b>
 	{{.StartOrderPrice}}
-	{{.CurrencyId}}
+	{{.CurrencyId | "unknown currency"}}
 </div>
 <hr />
 <div><b>Тип закупки:</b> {{.OrderType}}</div>

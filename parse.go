@@ -25,7 +25,7 @@ func parse(r io.Reader) ([]*Order, error) {
 	rdr.TrailingComma = true
 	rdr.FieldsPerRecord = _COLUMN_COUNT
 	// skip first line
-	rdr.Read()
+	// rdr.Read()
 	orders := make([]*Order, 0)
 	for {
 		row, err := rdr.Read()

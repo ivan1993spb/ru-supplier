@@ -11,13 +11,33 @@ import (
 	"time"
 )
 
-type ErrParsing struct {
-	subj string
-	err  error
-}
+type ErrParsing uint8
 
-func (err *ErrParsing) Error() string {
-	return fmt.Sprintf("Invalid %q: %q", err.subj, err.err)
+const (
+	_INVALID_LAW_ID ErrParsing = iota
+	_INVALID_EXHIBITION_NUMBER
+	_INVALID_START_ORDER_PRICE
+	_UNKNOWN_CURRENCY
+	_UNKNOWN_START_FILING_DATE
+	_UNKNOWN_FINISH_FILING_DATE
+)
+
+func (err ErrParsing) Error() string {
+	switch err {
+	case _INVALID_LAW_ID:
+		return "Invalid or unknown law id"
+	case _INVALID_EXHIBITION_NUMBER:
+		return "Invalid exhibition number"
+	case _INVALID_START_ORDER_PRICE:
+		return "Invalid start order price"
+	case _UNKNOWN_CURRENCY:
+		return "Unknown currency"
+	case _UNKNOWN_START_FILING_DATE:
+		return "Unknown start filing date"
+	case _UNKNOWN_FINISH_FILING_DATE:
+		return "Unknown finish filing date"
+	}
+	return "Unknown parsing error"
 }
 
 type OrderLaw int
@@ -37,7 +57,7 @@ func ParseLow(str string) (OrderLaw, error) {
 	case strings.Contains(str, "94"):
 		return FZ94, nil
 	}
-	return -1, errors.New("ParseLow(): invalid or unknown order law")
+	return -1, _INVALID_LAW_ID
 }
 
 func (l OrderLaw) String() string {
@@ -62,7 +82,6 @@ func ParsePrice(str string) (Price, error) {
 	// round order price with kopeika
 	if price < 0 {
 		price = -price
-		err = errors.New("negative price")
 	}
 	price = price * 100
 	if math.Mod(price, 1) >= 0.5 {
@@ -125,7 +144,7 @@ func NewOrder(law_id, order_id, order_type, order_name,
 	var err error
 	order.LawId, err = ParseLow(law_id)
 	if err != nil {
-		order.PushError(&ErrParsing{"low_id", err})
+		order.PushError(_INVALID_LAW_ID)
 		err = nil
 	}
 	order.OrderId = strings.TrimLeft(order_id, "№")
@@ -133,40 +152,30 @@ func NewOrder(law_id, order_id, order_type, order_name,
 		// Только для многолотовых закупок
 		order.ExhibitionNumber, err = strconv.Atoi(exhibition_number)
 		if err != nil {
-			order.PushError(&ErrParsing{"exhibition_number", err})
+			order.PushError(_INVALID_EXHIBITION_NUMBER)
 			err = nil
 		}
 	}
 	order.StartOrderPrice, err = ParsePrice(start_order_price)
 	if err != nil {
-		order.PushError(&ErrParsing{"start_order_price", err})
+		order.PushError(_INVALID_START_ORDER_PRICE)
 		err = nil
 	}
 	if len(order.CurrencyId) == 0 {
-		order.PushError(&ErrParsing{
-			"currency_id",
-			errors.New("unknown currency"),
-		})
+		order.PushError(_UNKNOWN_CURRENCY)
 	}
 	if len(start_diling_date) == 0 {
 		// Когда по какой-то причине в csv файле отсутствует дата
 		// начала приема заявок
 		// назначаем дату последнего события и выводим ошибку
 		order.StartDilingDate = last_event_date
-		order.PushError(&ErrParsing{
-			"start_diling_date",
-			errors.New("unknown start filing date"),
-		})
+		order.PushError(_UNKNOWN_START_FILING_DATE)
 	} else {
 		order.StartDilingDate = start_diling_date
 	}
 	if len(finish_diling_date) == 0 {
 		// отсутствует дата окончания приема заявок
-		order.FinishDilingDate = "00.00.0000"
-		order.PushError(&ErrParsing{
-			"finish_diling_date",
-			errors.New("unknown finish filing date"),
-		})
+		order.PushError(_UNKNOWN_FINISH_FILING_DATE)
 	} else {
 		order.FinishDilingDate = finish_diling_date
 	}
@@ -205,6 +214,7 @@ func (order *Order) Description() string {
 	err := tmpl.Execute(buff, order)
 	if err != nil {
 		log.Error.Println("template execution error:", err)
+		return ""
 	}
 	return buff.String()
 }

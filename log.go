@@ -5,27 +5,22 @@ import (
 	"os"
 )
 
-const (
-	_ERROR_LOG_FILE_NAME   = "error.zakup.log"
-	_WARNING_LOG_FILE_NAME = "warning.zakup.log"
-)
-
 type Log struct {
 	Error, Warning *logpkg.Logger
 }
 
-func NewLog() (*Log, error) {
+func NewLog(efname, wfname string) (*Log, error) {
 	var err error
 	var efile *os.File
 	efile, err = os.OpenFile(
-		_ERROR_LOG_FILE_NAME,
+		efname,
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
 		os.ModePerm,
 	)
 	if err == nil {
 		var wfile *os.File
 		wfile, err = os.OpenFile(
-			_WARNING_LOG_FILE_NAME,
+			wfname,
 			os.O_CREATE|os.O_WRONLY|os.O_APPEND,
 			os.ModePerm,
 		)
