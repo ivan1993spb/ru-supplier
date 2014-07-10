@@ -7,6 +7,8 @@ import (
 	"regexp"
 )
 
+const _FILE_FILTERS = "filters.json"
+
 type ErrInvalidRegexp struct {
 	sect, ptrn string // section and pattern
 	err        error

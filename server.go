@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"encoding/xml"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -32,6 +32,7 @@ func (s *Server) Bind() (net.Listener, http.Handler) {
 
 func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+	var orders []*Order
 	if err := r.ParseForm(); err != nil {
 		log.Warning.Println("reading request error:", err)
 	} else if resp, err := load(r.Form.Get("url")); err != nil {
@@ -39,46 +40,32 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		defer resp.Body.Close()
 		if resp.StatusCode == 200 {
-			rdr := bufio.NewReaderSize(resp.Body, 370)
-			// skip first line
-			rdr.ReadString('\n')
-			line, err := rdr.ReadBytes('\n')
-			chunk, ok := hashstore.GetHashChunk(resp.Request.URL.String())
-			if ok {
+			orders, err = parse(resp)
+			if err != nil && err != io.EOF {
+				log.Warning.Println("can't read or parse response:",
+					err)
+			}
+			if len(orders) > 0 {
+				orders = filter(orders)
 			}
 		} else {
 			log.Warning.Printf("server return %q\n",
 				strings.ToLower(resp.Status))
 		}
 	}
-
-	// 	 else {
-	// 		orders, err := parse(resp.Body)
-	// 		if err != nil {
-	// 			log.Warning.Println("can't read or parse response:",
-	// 				err)
-	// 		}
-	// 		if len(orders) > 0 {
-	// 			orders = filter(orders)
-	// 		}
-	// 		w.Header().Set("Content-Type",
-	// 			"application/xml; charset=utf-8")
-	// 		w.WriteHeader(http.StatusOK)
-	// 		w.Write([]byte(xml.Header))
-	// 		err = xml.NewEncoder(w).Encode(
-	// 			OrdersToRssFeed(
-	// 				orders,
-	// 				// search string as title (if exists)
-	// 				URL.Query().Get("searchString"),
-	// 			).FeedXml(),
-	// 		)
-	// 		if err != nil {
-	// 			log.Error.Println("can't send response:", err)
-	// 		}
-	// 	}
-	// 	return
-	// }
-	// w.WriteHeader(http.StatusBadRequest)
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(xml.Header))
+	var title string
+	if URL, err := url.Parse(r.Form.Get("url")); err == nil {
+		title = URL.Query().Get("searchString")
+	}
+	err := xml.NewEncoder(w).Encode(
+		OrdersToRssFeed(orders, title).FeedXml(),
+	)
+	if err != nil {
+		log.Error.Println("can't send response:", err)
+	}
 }
 
 func ShortLinkHandler(w http.ResponseWriter, r *http.Request) {

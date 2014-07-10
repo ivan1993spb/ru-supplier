@@ -21,7 +21,11 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 		Лот {{.ExhibitionNumber}}
 	{{end}}
 </h1>
-<div><a href="{{.Link}}">{{.OrderName | "unknown name"}}</a></div>
+<div>
+	<a href="{{.Link}}">
+		{{if .OrderName}}{{.OrderName}}{{else}}unknown{{end}}
+	</a>
+</div>
 {{if .OKDP}}
 	<div><b>ОКДП:</b> {{.OKDP}}</div>
 {{end}}
@@ -30,13 +34,19 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 {{end}}
 <div>
 	<b>Сроки подачи заявки:</b>
-	с {{.StartDilingDate | "00.00.0000"}}
-	по <s>{{.FinishDilingDate | "00.00.0000"}}</s>
+	с
+	{{if .StartDilingDate}}{{.StartDilingDate}}
+	{{else}}00.00.0000{{end}}
+	по
+	<s>
+		{{if .FinishDilingDate}}{{.FinishDilingDate}}
+		{{else}}00.00.0000{{end}}
+	</s>
 </div>
 <div>
 	<b>Начальная (максимальная) цена:</b>
 	{{.StartOrderPrice}}
-	{{.CurrencyId | "unknown currency"}}
+	{{if .CurrencyId}}{{.CurrencyId}}{{else}}unknown currency{{end}}
 </div>
 <hr />
 <div><b>Тип закупки:</b> {{.OrderType}}</div>
