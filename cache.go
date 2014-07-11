@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"fmt" // debug
 	"io"
 	"os"
 )
@@ -38,7 +39,9 @@ func (cr *CacheReader) Read(p []byte) (n int, err error) {
 				break
 			}
 			j += k
-			hash.Write(append(cr.chunk, p[i:j]...))
+			DEB := append(cr.chunk, p[i:j]...) // debug
+			fmt.Println(DEB)                   // debug
+			hash.Write(DEB)                    // debug
 			if bytes.Compare(cr.ch_hash, hash.Sum(nil)) == 0 {
 				n = j
 				err = io.EOF
@@ -116,11 +119,14 @@ func (hs *HashStore) Flush() error {
 
 func (hs *HashStore) GetHashChunk(rawurl string) ([]byte, bool) {
 	if len(rawurl) > 0 {
+		//fmt.Printf("get %q\n", rawurl) // debug
 		hash := md5.New()
 		hash.Write([]byte(rawurl))
 		url := hash.Sum(nil)
+		//fmt.Printf("get %x\n", url) // debug
 		for _, pair := range hs.data {
 			if bytes.Compare(pair.url, url) == 0 {
+				fmt.Println("found in cache") // debug
 				return pair.chunk, true
 			}
 		}
@@ -133,9 +139,12 @@ func (hs *HashStore) SetHashChunk(rawurl string, chunk []byte) {
 	if len(rawurl) == 0 {
 		return
 	}
+	fmt.Println("check chunk =", chunk) // debug
+	// fmt.Printf("set %q\n", rawurl)      // debug
 	hash := md5.New()
 	hash.Write([]byte(rawurl))
 	url := hash.Sum(nil)
+	//fmt.Printf("set %x\n", url) // debug
 	hash.Reset()
 	hash.Write(chunk)
 	chunk = hash.Sum(nil)

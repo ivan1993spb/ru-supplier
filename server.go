@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 const (
@@ -49,17 +48,16 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 				orders = filter(orders)
 			}
 		} else {
-			log.Warning.Printf("server return %q\n",
-				strings.ToLower(resp.Status))
+			log.Warning.Printf("server return %q\n", resp.Status)
 		}
 	}
-	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(xml.Header))
 	var title string
 	if URL, err := url.Parse(r.Form.Get("url")); err == nil {
 		title = URL.Query().Get("searchString")
 	}
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(xml.Header))
 	err := xml.NewEncoder(w).Encode(
 		OrdersToRssFeed(orders, title).FeedXml(),
 	)
@@ -72,9 +70,9 @@ func ShortLinkHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err := r.ParseForm(); err != nil {
 		log.Warning.Println("bad request:", err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusOK)
 	} else {
-		// also redirect if order id was not passed
+		// redirect if order id was not passed also
 		http.Redirect(w, r, MakeLink(r.Form.Get("order")),
 			http.StatusFound)
 	}
