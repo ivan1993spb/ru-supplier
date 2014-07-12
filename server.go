@@ -38,17 +38,12 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 		log.Warning.Println("loading error:", err)
 	} else {
 		defer resp.Body.Close()
-		if resp.StatusCode == 200 {
-			orders, err = parse(resp)
-			if err != nil && err != io.EOF {
-				log.Warning.Println("can't read or parse response:",
-					err)
-			}
-			if len(orders) > 0 {
-				orders = filter(orders)
-			}
-		} else {
-			log.Warning.Printf("server return %q\n", resp.Status)
+		orders, err = parse(resp)
+		if err != nil && err != io.EOF {
+			log.Warning.Println("can't read or parse response:", err)
+		}
+		if len(orders) > 0 {
+			orders = filter(orders)
 		}
 	}
 	var title string

@@ -6,7 +6,6 @@ import (
 	"crypto/md5"
 	"encoding/csv"
 	"errors"
-	"fmt" // debug
 	"io"
 	"net/http"
 	"regexp"
@@ -23,7 +22,12 @@ const (
 )
 
 func parse(resp *http.Response) ([]*Order, error) {
-	fmt.Println("===============================================") // debug
+	if resp == nil {
+		panic("parse(): passed nil response")
+	}
+	if resp.StatusCode != 200 {
+		return nil, errors.New("server return status:" + resp.Status)
+	}
 	w1251rdr, err := charset.NewReader(_STREAM_CHARSET, resp.Body)
 	if err != nil {
 		return nil, err
@@ -50,8 +54,7 @@ func parse(resp *http.Response) ([]*Order, error) {
 	nhash := md5.New()
 	nhash.Write(newest_chunk)
 	if bytes.Compare(checking_chunk, nhash.Sum(nil)) == 0 {
-		fmt.Println("feed was not updated") // debug
-		return []*Order{}, nil
+		return nil, nil
 	}
 	// save newest chunk in cache
 	hashstore.SetHashChunk(rawurl, newest_chunk)
@@ -74,12 +77,10 @@ func parse(resp *http.Response) ([]*Order, error) {
 	var rdr *csv.Reader
 	// if exists checking chunk read while does not find matched chunk
 	if exists && len(checking_chunk) > 0 {
-		fmt.Println("use CacheReader")
 		rdr = csv.NewReader(
 			NewCacheReader(brdr, []byte{'\n'}, checking_chunk),
 		)
 	} else {
-		fmt.Println("without CacheReader")
 		rdr = csv.NewReader(brdr)
 	}
 	rdr.Comma = ';'
@@ -94,6 +95,7 @@ func parse(resp *http.Response) ([]*Order, error) {
 		if err == io.EOF && len(row) == 0 {
 			break
 		}
+		// csv reader checks count of fields
 		orders = append(orders, NewOrder(row[0], row[1], row[2], row[3],
 			row[4], row[5], row[6], row[7], row[8], row[9], row[10],
 			row[11], row[12], row[13], row[14], row[15], row[16]))
