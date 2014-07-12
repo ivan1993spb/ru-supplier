@@ -15,7 +15,7 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 	i {color: #89f;}
 </style>
 <h1>
-	<b>{{.LawId}}</b>
+	<b>{{if .LawId}}{{.LawId}}{{else}}??-ФЗ{{end}}</b>
 	№{{.OrderId}}
 	{{if .ExhibitionNumber}}
 		Лот {{.ExhibitionNumber}}

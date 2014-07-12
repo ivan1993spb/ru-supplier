@@ -146,6 +146,6 @@ func (hs *HashStore) SetHashChunk(rawurl string, chunk []byte) {
 			return
 		}
 	}
-	// create pair
+	// create pair if new url
 	hs.data = append(hs.data, &HashPair{url, chunk})
 }

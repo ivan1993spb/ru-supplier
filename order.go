@@ -68,7 +68,7 @@ func (l OrderLaw) String() string {
 	case FZ94:
 		return "94-ФЗ"
 	}
-	return "??-ФЗ"
+	return ""
 }
 
 type Price float64
