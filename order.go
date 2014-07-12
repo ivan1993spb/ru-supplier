@@ -42,7 +42,8 @@ func (err ErrParsing) Error() string {
 type OrderLaw int
 
 const (
-	FZ44 OrderLaw = iota
+	// to correct template compilation it cannot starts from zero
+	FZ44 OrderLaw = iota + 1
 	FZ223
 	FZ94
 )
