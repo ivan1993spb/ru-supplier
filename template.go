@@ -21,10 +21,7 @@ var tmpl = template.Must(template.New("tmpl").Parse(`<!DOCTYPE html>
 	<body>
 		<h1>
 			<b>{{if .LawId}}{{.LawId}}{{else}}??-ФЗ{{end}}</b>
-			№{{.OrderId}}
-			{{if .ExhibitionNumber}}
-				Лот {{.ExhibitionNumber}}
-			{{end}}
+			{{.Title}}
 		</h1>
 		<div>
 			<a href="{{.Link}}">

@@ -33,7 +33,7 @@ func parse(resp *http.Response) ([]*Order, error) {
 		return nil, err
 	}
 	brdr := bufio.NewReaderSize(w1251rdr, _BUFFER_SIZE)
-	// skip first topic line
+	// skip first line with topics
 	if _, err = brdr.ReadString('\n'); err != nil {
 		return nil, errors.New("skip first line err: " + err.Error())
 	}
