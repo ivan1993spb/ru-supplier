@@ -20,7 +20,8 @@ func (e *ErrInvalidRegexp) Error() string {
 }
 
 func filter(orders []*Order) []*Order {
-	if len(orders) == 0 {
+	count := len(orders)
+	if count == 0 {
 		return orders
 	}
 	file, err := os.Open(_FILE_FILTERS)
@@ -142,5 +143,7 @@ func filter(orders []*Order) []*Order {
 			})
 		}
 	}
+	filtered := (1 - float32(len(orders))/float32(count))
+	log.Warning.Printf("filtered %.1f%%\n", filtered*100)
 	return orders
 }
