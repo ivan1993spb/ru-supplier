@@ -107,8 +107,7 @@ func (hs *HashStore) Flush() error {
 	defer file.Close()
 	data := make(map[string]string)
 	for _, pair := range hs.data {
-		data[hex.EncodeToString(pair.url)] =
-			hex.EncodeToString(pair.chunk)
+		data[hex.EncodeToString(pair.url)] = hex.EncodeToString(pair.chunk)
 	}
 	enc := json.NewEncoder(file)
 	return enc.Encode(data)
@@ -148,4 +147,10 @@ func (hs *HashStore) SetHashChunk(rawurl string, chunk []byte) {
 	}
 	// create pair if new url
 	hs.data = append(hs.data, &HashPair{url, chunk})
+}
+
+// Remove removes all cache
+func (hs *HashStore) Remove() error {
+	hs.data = nil
+	return os.Remove(hs.fname)
 }

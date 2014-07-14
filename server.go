@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"sync"
 )
 
 const (
@@ -15,21 +16,33 @@ const (
 
 type Server struct {
 	*http.ServeMux
+	*sync.WaitGroup
 	lis net.Listener
 }
 
-func NewServer(lis net.Listener) (s *Server) {
-	s = &Server{http.NewServeMux(), lis}
+func NewServer() (s *Server) {
+	s = &Server{http.NewServeMux(), &sync.WaitGroup{}, nil}
 	s.HandleFunc(_PATH_TO_RSS, s.RSSHandler)
 	s.HandleFunc(_PATH_TO_SHORT_LINKS, ShortLinkHandler)
 	return s
 }
 
-func (s *Server) Bind() (net.Listener, http.Handler) {
-	return s.lis, s
+func (s *Server) Serve(l net.Listener) error {
+	if l == nil {
+		panic("server: passed nil listener")
+	}
+	s.lis = l
+	return http.Serve(l, s)
+}
+
+func (s *Server) ShutDown() error {
+	s.Wait() // wait for all processed requests
+	defer func() { s.lis = nil }()
+	return s.lis.Close()
 }
 
 func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
+	s.Add(1) // signal that yet another request is processed
 	defer r.Body.Close()
 	var orders []*Order
 	if err := r.ParseForm(); err != nil {
@@ -59,6 +72,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error.Println("can't send response:", err)
 	}
+	s.Done() // signal that request was processed
 }
 
 func ShortLinkHandler(w http.ResponseWriter, r *http.Request) {

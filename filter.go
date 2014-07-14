@@ -19,7 +19,26 @@ func (e *ErrInvalidRegexp) Error() string {
 		e.err.Error() + `; ` + e.ptrn
 }
 
-func filter(orders []*Order) []*Order {
+type Filter struct {
+	fname   string
+	enabled bool
+}
+
+func NewFilter(fname string) *Filter {
+	if len(fname) == 0 {
+		panic("filter: invalid file name")
+	}
+	return &Filter{fname, true}
+}
+
+func (f *Filter) SetEnable(flag bool) {
+	f.enabled = flag
+}
+
+func (f *Filter) Filter(orders []*Order) []*Order {
+	if !f.enabled {
+		return orders
+	}
 	count := len(orders)
 	if count == 0 {
 		return orders
