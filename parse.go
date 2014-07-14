@@ -16,17 +16,23 @@ import (
 )
 
 const (
-	_COLUMN_COUNT   = 17
-	_STREAM_CHARSET = "windows-1251"
-	_BUFFER_SIZE    = 1024
+	_ORDER_COLUMN_COUNT = 17
+	_STREAM_CHARSET     = "windows-1251"
+	_BUFFER_SIZE        = 1024
 )
+
+type ErrResponseStatus int
+
+func (e ErrResponseStatus) Error() string {
+	return "server return status " + http.StatusText(int(e))
+}
 
 func Parse(resp *http.Response) ([]*Order, error) {
 	if resp == nil {
 		panic("parse(): passed nil response")
 	}
 	if resp.StatusCode != 200 {
-		return nil, errors.New("server return status:" + resp.Status)
+		return nil, ErrResponseStatus(resp.StatusCode)
 	}
 	w1251rdr, err := charset.NewReader(_STREAM_CHARSET, resp.Body)
 	if err != nil {
@@ -43,17 +49,18 @@ func Parse(resp *http.Response) ([]*Order, error) {
 	// get checking chunk
 	// checking chunk was newest chunk at last time
 	checking_chunk, exists := hashstore.GetHashChunk(rawurl)
-	// current newest chunk will checkin chunk at next time
+	// current newest chunk will checking chunk at next time
 	newest_chunk, err := brdr.ReadBytes('\n')
 	if err != nil {
 		return nil, err
 	}
 	// cut delim \n
 	newest_chunk = newest_chunk[:len(newest_chunk)-1]
-	// return if feed was not updated
-	nhash := md5.New()
-	nhash.Write(newest_chunk)
-	if bytes.Compare(checking_chunk, nhash.Sum(nil)) == 0 {
+	// check for updates
+	hash := md5.New()
+	hash.Write(newest_chunk)
+	if bytes.Compare(checking_chunk, hash.Sum(nil)) == 0 {
+		// return if feed was not updated
 		return nil, nil
 	}
 	// save newest chunk in cache
@@ -62,17 +69,15 @@ func Parse(resp *http.Response) ([]*Order, error) {
 		log.Error.Println("hashstore error:", err)
 	}
 	// convert newst chunk to order
-	order_row := regexp.MustCompile(`\s*;\s*`).
-		Split(string(newest_chunk), _COLUMN_COUNT)
-	if len(order_row) != _COLUMN_COUNT {
+	row := regexp.MustCompile(`\s*;\s*`).
+		Split(string(newest_chunk), _ORDER_COLUMN_COUNT)
+	if len(row) != _ORDER_COLUMN_COUNT {
 		return nil, errors.New("invalud column count")
 	}
 	// save to order list
-	orders := []*Order{NewOrder(order_row[0], order_row[1],
-		order_row[2], order_row[3], order_row[4], order_row[5],
-		order_row[6], order_row[7], order_row[8], order_row[9],
-		order_row[10], order_row[11], order_row[12], order_row[13],
-		order_row[14], order_row[15], order_row[16])}
+	var order_row [_ORDER_COLUMN_COUNT]string
+	copy(order_row[:], row)
+	orders := []*Order{NewOrder(order_row)}
 	// setting csv reader
 	var rdr *csv.Reader
 	// if exists checking chunk read while does not find matched chunk
@@ -86,19 +91,18 @@ func Parse(resp *http.Response) ([]*Order, error) {
 	rdr.Comma = ';'
 	rdr.TrimLeadingSpace = true
 	rdr.TrailingComma = true
-	rdr.FieldsPerRecord = _COLUMN_COUNT
+	rdr.FieldsPerRecord = _ORDER_COLUMN_COUNT
 	for {
-		row, err := rdr.Read()
+		row, err = rdr.Read()
 		if err != nil && err != io.EOF {
 			return orders, err
 		}
 		if err == io.EOF && len(row) == 0 {
 			break
 		}
+		copy(order_row[:], row)
 		// csv reader checks count of fields
-		orders = append(orders, NewOrder(row[0], row[1], row[2], row[3],
-			row[4], row[5], row[6], row[7], row[8], row[9], row[10],
-			row[11], row[12], row[13], row[14], row[15], row[16]))
+		orders = append(orders, NewOrder(order_row))
 		if err == io.EOF {
 			break
 		}

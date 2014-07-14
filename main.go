@@ -23,28 +23,28 @@ var (
 )
 
 func main() {
-	var err error
-	log, err = NewLog(_LOG_ERROR_FILE_NAME, _LOG_WARNING_FILE_NAME)
-	if err != nil {
-		fmt.Println("can't create log file:", err)
-		os.Exit(1)
-	}
-	hashstore, err = LoadHashStore(_HASH_STORE_FILE)
-	if err != nil {
-		fmt.Println(err)
-		log.Error.Println(err)
-		os.Exit(1)
-	}
-	lis, err := net.Listen("tcp", _LOCAL_ADDR)
-	if err != nil {
-		fmt.Println(err)
-		log.Error.Println(err)
-		os.Exit(1)
-	}
-	err = http.Serve(NewServer(lis).Bind())
-	if err != nil {
-		fmt.Println(err)
-		log.Error.Println(err)
-		os.Exit(1)
-	}
+	// var err error
+	// log, err = NewLog(_LOG_ERROR_FILE_NAME, _LOG_WARNING_FILE_NAME)
+	// if err != nil {
+	// 	fmt.Println("can't create log file:", err)
+	// 	os.Exit(1)
+	// }
+	// hashstore, err = LoadHashStore(_HASH_STORE_FILE)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	log.Error.Println(err)
+	// 	os.Exit(1)
+	// }
+	// lis, err := net.Listen("tcp", _LOCAL_ADDR)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	log.Error.Println(err)
+	// 	os.Exit(1)
+	// }
+	// err = http.Serve(NewServer(lis).Bind())
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	log.Error.Println(err)
+	// 	os.Exit(1)
+	// }
 }

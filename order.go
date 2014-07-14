@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 	"math"
 	"net"
 	"strconv"
@@ -130,33 +131,27 @@ type Order struct {
 	Errors           []error  // Ошибки при анализе закупки
 }
 
-func NewOrder(law_id, order_id, order_type, order_name,
-	exhibition_number, exhibition_name, start_order_price,
-	currency_id, okdp, okpd, organisation_name, pub_date,
-	last_event_date, order_stage, features, start_diling_date,
-	finish_diling_date string) (order *Order) {
-
-	order = &Order{-1, "", order_type, order_name,
-		0, exhibition_name, 0, currency_id, okdp, okpd,
-		organisation_name, pub_date, last_event_date,
-		order_stage, features, "", "", nil}
+func NewOrder(row [17]string) (order *Order) {
+	order = &Order{-1, "", row[2], row[3], 0, row[5], 0, row[7],
+		row[8], row[9], row[10], row[11], row[12], row[13], row[14],
+		"", "", nil}
 
 	var err error
-	order.LawId, err = ParseLow(law_id)
+	order.LawId, err = ParseLow(row[0])
 	if err != nil {
 		order.PushError(_INVALID_LAW_ID)
 		err = nil
 	}
-	order.OrderId = strings.TrimLeft(order_id, "№")
-	if len(exhibition_number) > 0 {
-		// Только для многолотовых закупок
-		order.ExhibitionNumber, err = strconv.Atoi(exhibition_number)
+	order.OrderId = strings.TrimLeft(row[1], "№")
+	if len(row[4]) > 0 {
+		// Только для многолотовых закупок фз 223
+		order.ExhibitionNumber, err = strconv.Atoi(row[4])
 		if err != nil {
 			order.PushError(_INVALID_EXHIBITION_NUMBER)
 			err = nil
 		}
 	}
-	order.StartOrderPrice, err = ParsePrice(start_order_price)
+	order.StartOrderPrice, err = ParsePrice(row[6])
 	if err != nil {
 		order.PushError(_INVALID_START_ORDER_PRICE)
 		err = nil
@@ -164,20 +159,20 @@ func NewOrder(law_id, order_id, order_type, order_name,
 	if len(order.CurrencyId) == 0 {
 		order.PushError(_UNKNOWN_CURRENCY)
 	}
-	if len(start_diling_date) == 0 {
+	if len(row[15]) == 0 {
 		// Когда по какой-то причине в csv файле отсутствует дата
 		// начала приема заявок
 		// назначаем дату последнего события и выводим ошибку
-		order.StartDilingDate = last_event_date
+		order.StartDilingDate = row[12]
 		order.PushError(_UNKNOWN_START_FILING_DATE)
 	} else {
-		order.StartDilingDate = start_diling_date
+		order.StartDilingDate = row[15]
 	}
-	if len(finish_diling_date) == 0 {
+	if len(row[16]) == 0 {
 		// отсутствует дата окончания приема заявок
 		order.PushError(_UNKNOWN_FINISH_FILING_DATE)
 	} else {
-		order.FinishDilingDate = finish_diling_date
+		order.FinishDilingDate = row[16]
 	}
 	return
 }
@@ -261,3 +256,82 @@ func MakeLink(order_id string) string {
 		"&showLotsInfo=false&isPaging=false",
 		"&isHeaderClick=&checkIds=")
 }
+
+var tmpl = template.Must(template.New("tmpl").Parse(`<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{.Title}}</title>
+		<style>
+			div, h1 {margin: 10px 0px;}
+			ul {margin: 10px 15px;}
+			h1 {font-size: 15pt;}
+			a, s {text-decoration: none;}
+			a {color: #000;}
+			a:hover {background-color: #444; color: #fff;}
+			s {color: #f00;}
+			b {color: #999; margin-right: 8px;}
+			i {color: #89f;}
+		</style>
+	</head>
+	<body>
+		<h1>
+			<b>{{if .LawId}}{{.LawId}}{{else}}??-ФЗ{{end}}</b>
+			{{.Title}}
+		</h1>
+		<div>
+			<a href="{{.Link}}">
+				{{if .OrderName}}{{.OrderName}}{{else}}unknown{{end}}
+			</a>
+		</div>
+		{{if .OKDP}}
+			<div><b>ОКДП:</b> {{.OKDP}}</div>
+		{{end}}
+		{{if .OKPD}}
+			<div><b>ОКПД:</b> {{.OKPD}}</div>
+		{{end}}
+		<div>
+			<b>Сроки подачи заявки:</b>
+			с
+			{{if .StartDilingDate}}{{.StartDilingDate}}
+			{{else}}00.00.0000{{end}}
+			по
+			<s>
+				{{if .FinishDilingDate}}{{.FinishDilingDate}}
+				{{else}}00.00.0000{{end}}
+			</s>
+		</div>
+		<div>
+			<b>Начальная (максимальная) цена:</b>
+			{{.StartOrderPrice}}
+			{{if .CurrencyId}}{{.CurrencyId}}
+			{{else}}unknown currency{{end}}
+		</div>
+		<hr />
+		{{if .OrderType}}
+			<div><b>Тип закупки:</b> {{.OrderType}}</div>
+		{{end}}
+		{{if .OrderStage}}
+			<div><b>Этап закупки:</b> {{.OrderStage}}</div>
+		{{end}}
+		{{if .PubDate}}
+			<div><b>Дата публикации извещения:</b> {{.PubDate}}</div>
+		{{end}}
+		{{if .OrganisationName}}
+			<div><b>Организация:</b> {{.OrganisationName}}</div>
+		{{end}}
+		{{if .Features}}
+			<div><i>{{.Features}}</i></div>
+		{{end}}
+		{{if .Errors}}
+			<hr />
+			<div>
+				<s>Проверьте извещение</s>, были обнаружены ошибки:
+			</div>
+			<ul>
+				{{range .Errors}}
+					<li>{{.}}</li>
+				{{end}}
+			</ul>
+		{{end}}
+	</body>
+</html>`))
