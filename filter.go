@@ -7,8 +7,6 @@ import (
 	"regexp"
 )
 
-const _FILE_FILTERS = "filters.json"
-
 type ErrInvalidRegexp struct {
 	sect, ptrn string // section and pattern
 	err        error
@@ -43,13 +41,13 @@ func (f *Filter) Filter(orders []*Order) []*Order {
 	if count == 0 {
 		return orders
 	}
-	file, err := os.Open(_FILE_FILTERS)
+	file, err := os.Open(f.fname)
 	if err != nil {
 		if os.IsExist(err) {
 			log.Error.Println("filter(): can't open file with",
 				"filter patterns:", err)
 		} else {
-			log.Warning.Println(_FILE_FILTERS, "was not found")
+			log.Warning.Println(f.fname, "was not found")
 		}
 		return orders
 	}
@@ -63,7 +61,7 @@ func (f *Filter) Filter(orders []*Order) []*Order {
 			log.Error.Println("filter(): can't decode json",
 				"from file with filter patterns:", err)
 		} else {
-			log.Warning.Println("empty filter file", _FILE_FILTERS)
+			log.Warning.Println("empty filter file", f.fname)
 		}
 		return orders
 	}

@@ -11,7 +11,8 @@ import (
 const _LOCAL_ADDR = "zakup-robot.ru:80"
 
 const (
-	_HASH_STORE_FILE       = "cache.json"
+	_HASH_STORE_FILE_NAME  = "cache.json"
+	_FILTERS_FILE_NAME     = "filters.json"
 	_LOG_ERROR_FILE_NAME   = "error.log"
 	_LOG_WARNING_FILE_NAME = "warning.log"
 )

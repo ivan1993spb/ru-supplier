@@ -244,19 +244,19 @@ func (order *Order) PubDateRFC1123() string {
 func MakeLink(order_id string) string {
 	return fmt.Sprint("http://zakupki.gov.ru",
 		"/epz/order/quicksearch/update.html",
-		"?placeOfSearch=FZ_44&_placeOfSearch=on",
-		"&placeOfSearch=FZ_223&_placeOfSearch=on",
-		"&placeOfSearch=FZ_94&_placeOfSearch=on",
-		"&priceFrom=0&priceTo=200+000+000+000",
-		"&publishDateFrom=&publishDateTo=",
-		"&updateDateFrom=&updateDateTo=",
-		"&orderStages=AF&_orderStages=on",
-		"&orderStages=CA&_orderStages=on",
-		"&orderStages=PC&_orderStages=on",
-		"&orderStages=PA&_orderStages=on",
-		"&sortDirection=false&sortBy=UPDATE_DATE",
-		"&recordsPerPage=_10&pageNo=1",
-		"&searchString=", order_id,
+		"?placeOfSearch=FZ_44&_placeOfSearch=on",  // ФЗ 44;
+		"&placeOfSearch=FZ_223&_placeOfSearch=on", // ФЗ 223;
+		"&placeOfSearch=FZ_94&_placeOfSearch=on",  // ФЗ 94;
+		"&priceFrom=0&priceTo=200+000+000+000",    // любая НМЦК;
+		"&publishDateFrom=&publishDateTo=",        // выкл. диапозоны
+		"&updateDateFrom=&updateDateTo=",          // времени;
+		"&orderStages=AF&_orderStages=on",         // подача заявок;
+		"&orderStages=CA&_orderStages=on",         // работа комиссии;
+		"&orderStages=PC&_orderStages=on",         // завершена;
+		"&orderStages=PA&_orderStages=on",         // отменена;
+		"&sortDirection=false&sortBy=UPDATE_DATE", // по убыванию...
+		"&recordsPerPage=_10&pageNo=1",            // даты публикации;
+		"&searchString=", order_id,                // поиск по ид;
 		"&strictEqual=false&morphology=false",
 		"&showLotsInfo=false&isPaging=false",
 		"&isHeaderClick=&checkIds=")

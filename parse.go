@@ -21,7 +21,7 @@ const (
 	_BUFFER_SIZE    = 1024
 )
 
-func parse(resp *http.Response) ([]*Order, error) {
+func Parse(resp *http.Response) ([]*Order, error) {
 	if resp == nil {
 		panic("parse(): passed nil response")
 	}

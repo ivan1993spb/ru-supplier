@@ -47,11 +47,11 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	var orders []*Order
 	if err := r.ParseForm(); err != nil {
 		log.Warning.Println("reading request error:", err)
-	} else if resp, err := load(r.Form.Get("url")); err != nil {
+	} else if resp, err := Load(r.Form.Get("url")); err != nil {
 		log.Warning.Println("loading error:", err)
 	} else {
 		defer resp.Body.Close()
-		orders, err = parse(resp)
+		orders, err = Parse(resp)
 		if err != nil && err != io.EOF {
 			log.Warning.Println("can't read or parse response:", err)
 		}
