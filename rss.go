@@ -4,7 +4,7 @@ import "github.com/gorilla/feeds"
 
 const _DEFAULT_TITLE = "RSS feed for russian government orders"
 
-func OrdersToRssFeed(orders []*Order, title string) *feeds.RssFeed {
+func OrdersToRssFeed(title string, orders []*Order) *feeds.RssFeed {
 	if len(title) == 0 {
 		title = _DEFAULT_TITLE
 	}

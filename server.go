@@ -53,7 +53,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 		defer resp.Body.Close()
 		orders, err = Parse(resp)
 		if err != nil && err != io.EOF {
-			log.Warning.Println("can't read or parse response:", err)
+			log.Warning.Println("can't read or parse response: ", err)
 		}
 		if len(orders) > 0 {
 			orders = filter(orders)
@@ -61,13 +61,14 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var title string
 	if URL, err := url.Parse(r.Form.Get("url")); err == nil {
+		// call feed like search request
 		title = URL.Query().Get("searchString")
 	}
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(xml.Header))
 	err := xml.NewEncoder(w).Encode(
-		OrdersToRssFeed(orders, title).FeedXml(),
+		OrdersToRssFeed(title, orders).FeedXml(),
 	)
 	if err != nil {
 		log.Error.Println("can't send response:", err)

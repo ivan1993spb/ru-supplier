@@ -65,7 +65,7 @@ func Parse(resp *http.Response) ([]*Order, error) {
 	order_row := regexp.MustCompile(`\s*;\s*`).
 		Split(string(newest_chunk), _COLUMN_COUNT)
 	if len(order_row) != _COLUMN_COUNT {
-		return nil, errors.New("Invalud column count")
+		return nil, errors.New("invalud column count")
 	}
 	// save to order list
 	orders := []*Order{NewOrder(order_row[0], order_row[1],
@@ -73,13 +73,13 @@ func Parse(resp *http.Response) ([]*Order, error) {
 		order_row[6], order_row[7], order_row[8], order_row[9],
 		order_row[10], order_row[11], order_row[12], order_row[13],
 		order_row[14], order_row[15], order_row[16])}
-	// setting reader
+	// setting csv reader
 	var rdr *csv.Reader
 	// if exists checking chunk read while does not find matched chunk
 	if exists && len(checking_chunk) > 0 {
-		rdr = csv.NewReader(
-			NewCacheReader(brdr, []byte{'\n'}, checking_chunk),
-		)
+		rdr = csv.NewReader(NewCacheReader(
+			brdr, []byte{'\n'}, checking_chunk,
+		))
 	} else {
 		rdr = csv.NewReader(brdr)
 	}
