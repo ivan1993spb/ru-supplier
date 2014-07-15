@@ -34,7 +34,7 @@ func (e ErrFilter) Error() string {
 // Pattern contains regexp string
 type Pattern string
 
-func (p *Pattern) Compile() (*regexp.Regexp, error) {
+func (p Pattern) Compile() (*regexp.Regexp, error) {
 	return regexp.Compile(string(p))
 }
 
@@ -48,7 +48,7 @@ func (ps PatternSet) Verify() error {
 	for i := 0; i < len(ps.prns); i++ {
 		// return error if there is invalid pattern
 		if _, err := ps.prns[i].Compile(); err != nil {
-			return &ErrRegexp{err, ps.prns[i]}
+			return &ErrInvalidPattern{err, ps.prns[i]}
 		}
 		for j := 0; j < len(ps.prns); j++ {
 			// return error if there is recurring patterns
@@ -76,7 +76,6 @@ func (ps PatternSet) Clear() {
 		}
 		i++
 	}
-	return nil
 }
 
 func (ps PatternSet) Compile() error {
@@ -90,6 +89,7 @@ func (ps PatternSet) Compile() error {
 			return err
 		}
 	}
+	return nil
 }
 
 type Filter struct {
@@ -121,7 +121,6 @@ func LoadFilter(fname string) (*Filter, error) {
 		} else {
 			return filter, ErrFilter("invalid JSON: " + err.Error())
 		}
-		return &Filter{fname: fname, enabled: true}
 	}
 	filter.All.prns = patterns["All"]
 	filter.All.Clear()
@@ -171,8 +170,10 @@ func (f *Filter) Exec(orders []*Order) ([]*Order, float32) {
 	// filter all fields
 	for _, exp := range f.All.exps {
 		for i := 0; i < len(orders); {
-			if exp.MatchString(orders[i].OrderName) || exp.MatchString(orders[i].OKDP) ||
-				exp.MatchString(orders[i].OKPD) || exp.MatchString(orders[i].OrganisationName) {
+			if exp.MatchString(orders[i].OrderName) ||
+				exp.MatchString(orders[i].OKDP) ||
+				exp.MatchString(orders[i].OKPD) ||
+				exp.MatchString(orders[i].OrganisationName) {
 				orders = append(orders[:i], orders[i+1:]...)
 			} else {
 				i++
