@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+var ErrInvalidConfig = errors.New("invalid config")
+
 type Config struct {
 	fname         string
 	Host, Port    string
@@ -27,7 +29,7 @@ func LoadConfig(fname string) (conf *Config, err error) {
 		if err = dec.Decode(&conf); err == nil {
 			if !conf.Valid() {
 				*conf = *defaultConfig
-				err = errors.New("invalid config")
+				err = ErrInvalidConfig
 			}
 		}
 	}
@@ -36,6 +38,9 @@ func LoadConfig(fname string) (conf *Config, err error) {
 }
 
 func (c *Config) Save() error {
+	if !c.Valid() {
+		return ErrInvalidConfig
+	}
 	file, err := os.Create(c.fname)
 	if err != nil {
 		return err
