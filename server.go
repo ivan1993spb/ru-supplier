@@ -18,6 +18,7 @@ type Server struct {
 	*http.ServeMux
 	*sync.WaitGroup
 	lis net.Listener
+	log *Log
 }
 
 func NewServer() (s *Server) {

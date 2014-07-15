@@ -65,9 +65,9 @@ func Parse(resp *http.Response) ([]*Order, error) {
 	}
 	// save newest chunk in cache
 	hashstore.SetHashChunk(rawurl, newest_chunk)
-	if err = hashstore.Flush(); err != nil {
-		log.Error.Println("hashstore error:", err)
-	}
+	// if err = hashstore.Flush(); err != nil {
+	//	log.Error.Println("hashstore error:", err)
+	// }
 	// convert newst chunk to order
 	row := regexp.MustCompile(`\s*;\s*`).
 		Split(string(newest_chunk), _ORDER_COLUMN_COUNT)

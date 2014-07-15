@@ -72,7 +72,7 @@ func LoadHashStore(fname string) (*HashStore, error) {
 		if os.IsNotExist(err) {
 			return &HashStore{fname, nil}, nil
 		}
-		return nil, err
+		return &HashStore{fname, nil}, err
 	}
 	defer file.Close()
 	dec := json.NewDecoder(file)
@@ -81,7 +81,7 @@ func LoadHashStore(fname string) (*HashStore, error) {
 		if err == io.EOF {
 			return &HashStore{fname, nil}, nil
 		}
-		return nil, err
+		return &HashStore{fname, nil}, err
 	}
 	hexdata := make([]*HashPair, 0)
 	for url, chunk := range data {

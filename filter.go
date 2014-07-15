@@ -159,6 +159,7 @@ func (f *Filter) SetEnable(flag bool) {
 	f.enabled = flag
 }
 
+// Exec executes filter for order list and returns statistic
 func (f *Filter) Exec(orders []*Order) ([]*Order, float32) {
 	if !f.enabled {
 		return orders, 0

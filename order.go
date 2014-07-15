@@ -208,8 +208,7 @@ func (order *Order) Description() string {
 	buff := bytes.NewBuffer(nil)
 	err := tmpl.Execute(buff, order)
 	if err != nil {
-		log.Error.Println("template execution error:", err)
-		return ""
+		return "template execution error: " + err.Error()
 	}
 	return buff.String()
 }
