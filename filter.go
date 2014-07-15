@@ -20,7 +20,29 @@ import (
 // Pattern contains regexp string
 type Pattern string
 
+func (p *Pattern) Compile(pattern) (*regexp.Regexp, error) {
+	return regexp.Compile(string(p))
+}
+
 type PatternSet []Pattern
+
+func (ps PatternSet) Add(p Pattern) bool {
+	for _, pattern := range ps {
+		if pattern == p {
+			return false
+		}
+	}
+	ps = append(ps, p)
+	return true
+}
+
+func (ps PatternSet) Del(i int) bool {
+	if len(ps) > i {
+		return false
+	}
+	ps = append(ps[:i], ps[i+1:]...)
+	return true
+}
 
 // PatternSet keeps patterns for filtration
 type Filter struct {
@@ -45,9 +67,9 @@ func (f *Filter) Flush() error {
 }
 
 // Verify checks patterns. Return error if is there or nil
-func (ps *PatternSet) Verify() error {
+// func (ps *PatternSet) Verify() error {
 
-}
+// }
 
 // type Filter struct {
 // 	fname   string
