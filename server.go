@@ -17,14 +17,15 @@ const (
 type Server struct {
 	*http.ServeMux
 	*sync.WaitGroup
-	lis net.Listener
-	log *Log
+	lis    net.Listener
+	log    *Log
+	filter *Filter
 }
 
 func NewServer() (s *Server) {
 	s = &Server{http.NewServeMux(), &sync.WaitGroup{}, nil}
 	s.HandleFunc(_PATH_TO_RSS, s.RSSHandler)
-	s.HandleFunc(_PATH_TO_SHORT_LINKS, ShortLinkHandler)
+	s.HandleFunc(_PATH_TO_SHORT_LINKS, s.ShortLinkHandler)
 	return s
 }
 
@@ -47,14 +48,14 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var orders []*Order
 	if err := r.ParseForm(); err != nil {
-		log.Warning.Println("reading request error:", err)
+		s.log.Warning.Println("reading request error:", err)
 	} else if resp, err := Load(r.Form.Get("url")); err != nil {
-		log.Warning.Println("loading error:", err)
+		s.log.Warning.Println("loading error:", err)
 	} else {
 		defer resp.Body.Close()
 		orders, err = Parse(resp)
 		if err != nil && err != io.EOF {
-			log.Warning.Println("can't read or parse response: ", err)
+			s.log.Warning.Println("can't read or parse response: ", err)
 		}
 		if len(orders) > 0 {
 			orders = filter(orders)
@@ -72,15 +73,15 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 		OrdersToRssFeed(title, orders).FeedXml(),
 	)
 	if err != nil {
-		log.Error.Println("can't send response:", err)
+		s.log.Error.Println("can't send response:", err)
 	}
 	s.Done() // signal that request was processed
 }
 
-func ShortLinkHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ShortLinkHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err := r.ParseForm(); err != nil {
-		log.Warning.Println("bad request:", err)
+		s.log.Warning.Println("bad request:", err)
 		w.WriteHeader(http.StatusOK)
 	} else {
 		// redirect if order id was not passed also
