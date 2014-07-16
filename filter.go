@@ -25,12 +25,6 @@ func (e *ErrInvalidPattern) Error() string {
 		string(e.pattern) + "; error: " + e.err.Error()
 }
 
-type ErrFilter string
-
-func (e ErrFilter) Error() string {
-	return "filter error: " + string(e)
-}
-
 // Pattern contains regexp string
 type Pattern string
 
@@ -95,21 +89,20 @@ func (ps PatternSet) Compile() error {
 type Filter struct {
 	All, OrderName, OKDP, OKPD, OrganisationName PatternSet
 	fname                                        string
-	enabled                                      bool
 }
 
-func LoadFilter(fname string) (*Filter, error) {
+func LoadFilter(fname string) (filter *Filter, err error) {
 	if len(fname) == 0 {
 		panic("filter: invalid file name")
 	}
-	file, err := os.Open(fname)
-	filter := &Filter{fname: fname, enabled: true}
+	var file *os.File
+	file, err = os.Open(fname)
+	filter = &Filter{fname: fname}
 	if err != nil {
-		if os.IsExist(err) {
-			return filter, ErrFilter("can't open file: " + err.Error())
-		} else {
-			return filter, ErrFilter("file does not exists")
+		if os.IsNotExist(err) {
+			err = nil
 		}
+		return
 	}
 	defer file.Close()
 	dec := json.NewDecoder(file)
@@ -117,10 +110,9 @@ func LoadFilter(fname string) (*Filter, error) {
 	err = dec.Decode(&patterns)
 	if err != nil {
 		if err == io.EOF {
-			return filter, ErrFilter("empty JSON stream (or file)")
-		} else {
-			return filter, ErrFilter("invalid JSON: " + err.Error())
+			err = nil
 		}
+		return
 	}
 	filter.All.prns = patterns["All"]
 	filter.All.Clear()
@@ -145,25 +137,17 @@ func (f *Filter) Flush() error {
 	if err != nil {
 		return err
 	}
-	patterns := make(map[string][]Pattern)
-	patterns["All"] = f.All.prns
-	patterns["OrderName"] = f.OrderName.prns
-	patterns["OKDP"] = f.OKDP.prns
-	patterns["OKPD"] = f.OKPD.prns
-	patterns["OrganisationName"] = f.OrganisationName.prns
-	enc := json.NewEncoder(file)
-	return enc.Encode(patterns)
+	return json.NewEncoder(file).Encode(map[string][]Pattern{
+		"All":              f.All.prns,
+		"OrderName":        f.OrderName.prns,
+		"OKDP":             f.OKDP.prns,
+		"OKPD":             f.OKPD.prns,
+		"OrganisationName": f.OrganisationName.prns,
+	})
 }
 
-func (f *Filter) SetEnable(flag bool) {
-	f.enabled = flag
-}
-
-// Exec executes filter for order list and returns statistic
-func (f *Filter) Exec(orders []*Order) ([]*Order, float32) {
-	if !f.enabled {
-		return orders, 0
-	}
+// Execute executes filter for order list and returns statistic
+func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 	count := len(orders)
 	if count == 0 {
 		return orders, 0

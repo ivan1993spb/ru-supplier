@@ -16,9 +16,8 @@ import (
 )
 
 const (
-	_ORDER_COLUMN_COUNT = 17
-	_STREAM_CHARSET     = "windows-1251"
-	_BUFFER_SIZE        = 1024
+	_STREAM_CHARSET = "windows-1251"
+	_BUFFER_SIZE    = 1024
 )
 
 type ErrResponseStatus int

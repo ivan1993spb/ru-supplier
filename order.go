@@ -110,6 +110,27 @@ func (p Price) String() string {
 	return "0" + output
 }
 
+const (
+	_FIELD_LAW_ID int = iota
+	_FIELD_ORDER_ID
+	_FIELD_ORDER_TYPE
+	_FIELD_ORDER_NAME
+	_FIELD_EXHIBITION_NUMBER
+	_FIELD_EXHIBITION_NAME
+	_FIELD_START_ORDER_PRICE
+	_FIELD_CURRENCY_ID
+	_FIELD_OKDP
+	_FIELD_OKPD
+	_FIELD_ORGANISATION_NAME
+	_FIELD_PUB_DATE
+	_FIELD_LAST_EVENT_DATE
+	_FIELD_ORDER_STAGE
+	_FIELD_FEATURES
+	_FIELD_START_DILING_DATE
+	_FIELD_FINISH_DILING_DATE
+	_ORDER_COLUMN_COUNT // result column count
+)
+
 type Order struct {
 	LawId            OrderLaw // Номер ФЗ
 	OrderId          string   // Реестровый номер закупки
@@ -131,48 +152,60 @@ type Order struct {
 	Errors           []error  // Ошибки при анализе закупки
 }
 
-func NewOrder(row [17]string) (order *Order) {
-	order = &Order{-1, "", row[2], row[3], 0, row[5], 0, row[7],
-		row[8], row[9], row[10], row[11], row[12], row[13], row[14],
-		"", "", nil}
+func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
+	order = &Order{
+		OrderId:          strings.TrimLeft(row[_FIELD_ORDER_ID], "№"),
+		OrderType:        row[_FIELD_ORDER_TYPE],
+		OrderName:        row[_FIELD_ORDER_NAME],
+		ExhibitionName:   row[_FIELD_EXHIBITION_NAME],
+		CurrencyId:       row[_FIELD_CURRENCY_ID],
+		OKDP:             row[_FIELD_OKDP],
+		OKPD:             row[_FIELD_OKPD],
+		OrganisationName: row[_FIELD_ORGANISATION_NAME],
+		PubDate:          row[_FIELD_PUB_DATE],
+		LastEventDate:    row[_FIELD_LAST_EVENT_DATE],
+		OrderStage:       row[_FIELD_ORDER_STAGE],
+		Features:         row[_FIELD_FEATURES],
+	}
 
 	var err error
-	order.LawId, err = ParseLow(row[0])
+	order.LawId, err = ParseLow(row[_FIELD_LAW_ID])
 	if err != nil {
 		order.PushError(_INVALID_LAW_ID)
 		err = nil
 	}
-	order.OrderId = strings.TrimLeft(row[1], "№")
-	if len(row[4]) > 0 {
+
+	if len(row[_FIELD_EXHIBITION_NUMBER]) > 0 {
 		// Только для многолотовых закупок фз 223
-		order.ExhibitionNumber, err = strconv.Atoi(row[4])
+		order.ExhibitionNumber, err = strconv.Atoi(
+			row[_FIELD_EXHIBITION_NUMBER])
 		if err != nil {
 			order.PushError(_INVALID_EXHIBITION_NUMBER)
 			err = nil
 		}
 	}
-	order.StartOrderPrice, err = ParsePrice(row[6])
+	order.StartOrderPrice, err = ParsePrice(row[_FIELD_START_ORDER_PRICE])
 	if err != nil {
 		order.PushError(_INVALID_START_ORDER_PRICE)
 		err = nil
 	}
-	if len(order.CurrencyId) == 0 {
+	if len(row[_FIELD_CURRENCY_ID]) == 0 {
 		order.PushError(_UNKNOWN_CURRENCY)
 	}
-	if len(row[15]) == 0 {
+	if len(row[_FIELD_START_DILING_DATE]) == 0 {
 		// Когда по какой-то причине в csv файле отсутствует дата
-		// начала приема заявок
-		// назначаем дату последнего события и выводим ошибку
-		order.StartDilingDate = row[12]
+		// начала приема заявок, назначаем дату последнего события
+		// и выводим ошибку
+		order.StartDilingDate = row[_FIELD_LAST_EVENT_DATE]
 		order.PushError(_UNKNOWN_START_FILING_DATE)
 	} else {
-		order.StartDilingDate = row[15]
+		order.StartDilingDate = row[_FIELD_START_DILING_DATE]
 	}
-	if len(row[16]) == 0 {
+	if len(row[_FIELD_FINISH_DILING_DATE]) == 0 {
 		// отсутствует дата окончания приема заявок
 		order.PushError(_UNKNOWN_FINISH_FILING_DATE)
 	} else {
-		order.FinishDilingDate = row[16]
+		order.FinishDilingDate = row[_FIELD_FINISH_DILING_DATE]
 	}
 	return
 }

@@ -8,13 +8,25 @@ import (
 
 var ErrInvalidConfig = errors.New("invalid config")
 
+// Config contains configurations
+// If you want use ptogram with any rss client port must be 80
+// (some rss clients require this)
 type Config struct {
 	fname         string
 	Host, Port    string
 	FilterEnabled bool
 }
 
+var defaultConfig = &Config{
+	Host:          "proxy-zakupki-gov-ru.local",
+	Port:          "80",
+	FilterEnabled: true,
+}
+
 func LoadConfig(fname string) (conf *Config, err error) {
+	if len(fname) == 0 {
+		panic("config: invalid file name")
+	}
 	var file *os.File
 	conf = new(Config)
 	*conf = *defaultConfig
@@ -41,6 +53,10 @@ func (c *Config) Save() error {
 	if !c.Valid() {
 		return ErrInvalidConfig
 	}
+	if c.LikeDefault() {
+		os.Remove(c.fname)
+		return nil
+	}
 	file, err := os.Create(c.fname)
 	if err != nil {
 		return err
@@ -50,12 +66,12 @@ func (c *Config) Save() error {
 	return enc.Encode(c)
 }
 
-func (c *Config) Valid() bool {
-	return len(c.Host)*len(c.Port) != 0
+func (c *Config) LikeDefault() bool {
+	return c.Host == defaultConfig.Host &&
+		c.Port == defaultConfig.Port &&
+		c.FilterEnabled == defaultConfig.FilterEnabled
 }
 
-var defaultConfig = &Config{
-	Host:          "proxy-zakupki-gov-ru.local",
-	Port:          "80",
-	FilterEnabled: true,
+func (c *Config) Valid() bool {
+	return len(c.Host)*len(c.Port) > 0
 }

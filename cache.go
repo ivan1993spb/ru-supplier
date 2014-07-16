@@ -27,6 +27,7 @@ func NewCacheReader(r io.Reader, d, h []byte) *CacheReader {
 	return &CacheReader{r, d, h, nil}
 }
 
+// Read reads and checks chunks
 func (cr *CacheReader) Read(p []byte) (n int, err error) {
 	if n, err = cr.r.Read(p); len(cr.delim) > 0 && n > 0 {
 		var i, j, k int
@@ -66,24 +67,29 @@ type HashStore struct {
 	data  []*HashPair
 }
 
-func LoadHashStore(fname string) (*HashStore, error) {
-	file, err := os.Open(fname)
+func LoadHashStore(fname string) (hs *HashStore, err error) {
+	if len(fname) == 0 {
+		panic("hashstore: invalid file name")
+	}
+	var file *os.File
+	hs = &HashStore{fname, nil}
+	file, err = os.Open(fname)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &HashStore{fname, nil}, nil
+			err = nil
 		}
-		return &HashStore{fname, nil}, err
+		return
 	}
 	defer file.Close()
 	dec := json.NewDecoder(file)
 	var data map[string]string
 	if err = dec.Decode(&data); err != nil {
 		if err == io.EOF {
-			return &HashStore{fname, nil}, nil
+			err = nil
 		}
-		return &HashStore{fname, nil}, err
+		return
 	}
-	hexdata := make([]*HashPair, 0)
+	hs.data = make([]*HashPair, 0)
 	for url, chunk := range data {
 		hex_url, err := hex.DecodeString(url)
 		if err != nil {
@@ -94,12 +100,16 @@ func LoadHashStore(fname string) (*HashStore, error) {
 		if err != nil {
 			continue
 		}
-		hexdata = append(hexdata, &HashPair{hex_url, hex_chunk})
+		hs.data = append(hs.data, &HashPair{hex_url, hex_chunk})
 	}
-	return &HashStore{fname, hexdata}, nil
+	return
 }
 
 func (hs *HashStore) Flush() error {
+	if len(hs.data) == 0 {
+		hs.Remove()
+		return nil
+	}
 	file, err := os.Create(hs.fname)
 	if err != nil {
 		return err
