@@ -7,21 +7,35 @@ import (
 )
 
 const (
-	_PROGRAM_TITLE = "Внимательный Поставшик"
+	_PROGRAM_TITLE             = "Внимательный Поставшик"
+	_TAB_TITLE_SERVER_SETTINGS = "Прокси"
+	_TAB_TITLE_LINKS           = "Адреса"
 )
 
 func StartInterface() {
 	var mw *walk.MainWindow
 	if _, err := (MainWindow{
 		AssignTo: &mw,
-		Title:    "Walk Data Binding Example",
-		MinSize:  Size{300, 200},
+		Title:    _PROGRAM_TITLE,
+		Size:     Size{200, 200},
 		Layout:   VBox{},
 		Children: []Widget{
-			PushButton{
-				Text: "Edit Animal",
-				OnClicked: func() {
-
+			TabWidget{
+				Pages: []TabPage{
+					{
+						Title: _TAB_TITLE_SERVER_SETTINGS,
+					},
+					{
+						Title: _TAB_TITLE_LINKS,
+						Children: []Widget{
+							TextEdit{
+								ToolTipText: "assasa",
+								Row:         122,
+								Column:      122,
+								Size:        Size{110, 120},
+							},
+						},
+					},
 				},
 			},
 		},
