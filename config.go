@@ -33,7 +33,7 @@ func LoadConfig(fname string) (conf *Config, err error) {
 	file, err = os.Open(fname)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = errors.New("config file was not found")
+			err = nil
 		}
 	} else {
 		defer file.Close()
@@ -74,4 +74,12 @@ func (c *Config) LikeDefault() bool {
 
 func (c *Config) Valid() bool {
 	return len(c.Host)*len(c.Port) > 0
+}
+
+func (c *Config) HTTPHost() (host string) {
+	host = c.Host
+	if c.Port != "80" {
+		host += ":" + c.Port
+	}
+	return
 }

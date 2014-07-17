@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"math"
-	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -229,11 +228,7 @@ func (order *Order) Link() string {
 }
 
 func (order *Order) ShortLink() string {
-	host, _, _ := net.SplitHostPort(_LOCAL_ADDR)
-	if len(host) == 0 {
-		host = "localhost"
-	}
-	return fmt.Sprintf("http://%s/%s?order=%s", host,
+	return fmt.Sprintf("http://%s/%s?order=%s", config.HTTPHost(),
 		strings.TrimLeft(_PATH_TO_SHORT_LINKS, "/"), order.OrderId)
 }
 

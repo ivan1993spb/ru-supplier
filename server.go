@@ -17,9 +17,7 @@ const (
 type Server struct {
 	*http.ServeMux
 	*sync.WaitGroup
-	lis    net.Listener
-	log    *Log
-	filter *Filter
+	lis net.Listener
 }
 
 func NewServer() (s *Server) {
@@ -48,17 +46,19 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var orders []*Order
 	if err := r.ParseForm(); err != nil {
-		s.log.Warning.Println("reading request error:", err)
+		log.Warning.Println("reading request error:", err)
 	} else if resp, err := Load(r.Form.Get("url")); err != nil {
-		s.log.Warning.Println("loading error:", err)
+		log.Warning.Println("loading error:", err)
 	} else {
 		defer resp.Body.Close()
 		orders, err = Parse(resp)
 		if err != nil && err != io.EOF {
-			s.log.Warning.Println("can't read or parse response: ", err)
+			log.Warning.Println("can't read or parse response: ", err)
 		}
-		if len(orders) > 0 {
-			orders = filter(orders)
+		if config.FilterEnabled && len(orders) > 0 {
+			var filtered float32
+			orders, filtered = filter.Execute(orders)
+			log.Warning.Printf("filtered %.1f%%\n", filtered*100)
 		}
 	}
 	var title string
@@ -73,7 +73,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 		OrdersToRssFeed(title, orders).FeedXml(),
 	)
 	if err != nil {
-		s.log.Error.Println("can't send response:", err)
+		log.Error.Println("can't send response:", err)
 	}
 	s.Done() // signal that request was processed
 }
@@ -81,7 +81,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) ShortLinkHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err := r.ParseForm(); err != nil {
-		s.log.Warning.Println("bad request:", err)
+		log.Warning.Println("bad request:", err)
 		w.WriteHeader(http.StatusOK)
 	} else {
 		// redirect if order id was not passed also
