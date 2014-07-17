@@ -132,7 +132,7 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 	return filter, nil
 }
 
-func (f *Filter) Flush() error {
+func (f *Filter) Save() error {
 	file, err := os.Create(f.fname)
 	if err != nil {
 		return err

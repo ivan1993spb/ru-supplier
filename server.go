@@ -89,3 +89,7 @@ func (s *Server) ShortLinkHandler(w http.ResponseWriter, r *http.Request) {
 			http.StatusFound)
 	}
 }
+
+func (s *Server) IsRunning() bool {
+	return s.lis != nil
+}
