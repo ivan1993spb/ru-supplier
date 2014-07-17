@@ -1,38 +1,42 @@
 package main
 
-import ()
 import (
-	"github.com/lxn/walk"
 	. "github.com/lxn/walk/declarative"
 )
 
 const (
-	_PROGRAM_TITLE             = "Внимательный Поставшик"
-	_TAB_TITLE_SERVER_SETTINGS = "Прокси"
-	_TAB_TITLE_LINKS           = "Адреса"
+	_PROGRAM_TITLE                     = "Внимательный Поставшик"
+	_TAB_TITLE_SERVER_SETTINGS         = "Прокси"
+	_TAB_TOOL_TIP_TEXT_SERVER_SETTINGS = "Настройки локального прокси сервера"
+	_TAB_TITLE_LINKS                   = "Адреса"
+	_TAB_TOOL_TIP_TEXT_LINKS           = "Генерация ссылок для RSS-клиента"
 )
 
 func StartInterface() {
-	var mw *walk.MainWindow
 	if _, err := (MainWindow{
-		AssignTo: &mw,
-		Title:    _PROGRAM_TITLE,
-		Size:     Size{200, 200},
-		Layout:   VBox{},
+		Title:  _PROGRAM_TITLE,
+		Size:   Size{200, 200},
+		Layout: VBox{},
 		Children: []Widget{
 			TabWidget{
 				Pages: []TabPage{
 					{
-						Title: _TAB_TITLE_SERVER_SETTINGS,
+						Title:       _TAB_TITLE_SERVER_SETTINGS,
+						ToolTipText: _TAB_TOOL_TIP_TEXT_SERVER_SETTINGS,
+						Layout:      VBox{},
+						Children: []Widget{
+							HSplitter{
+								Children: []Widget{},
+							},
+						},
 					},
 					{
-						Title: _TAB_TITLE_LINKS,
+						Title:       _TAB_TITLE_LINKS,
+						ToolTipText: _TAB_TOOL_TIP_TEXT_LINKS,
+						Layout:      VBox{},
 						Children: []Widget{
 							TextEdit{
-								ToolTipText: "assasa",
-								Row:         122,
-								Column:      122,
-								Size:        Size{110, 120},
+								ToolTipText: "=)",
 							},
 						},
 					},
