@@ -2,3 +2,6 @@
 !*.go
 *_test.go
 !.gitignore
+!*.syso
+!*.manifest
+!*.ico
