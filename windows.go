@@ -34,11 +34,7 @@ func StartInterface() {
 						Title:       _TAB_TITLE_LINKS,
 						ToolTipText: _TAB_TOOL_TIP_TEXT_LINKS,
 						Layout:      VBox{},
-						Children: []Widget{
-							TextEdit{
-								ToolTipText: "=)",
-							},
-						},
+						Children:    []Widget{},
 					},
 				},
 			},
