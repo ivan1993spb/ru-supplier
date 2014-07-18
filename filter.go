@@ -5,15 +5,7 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strconv"
 )
-
-type ErrRecurringPattern int
-
-func (e ErrRecurringPattern) Error() string {
-	return "pattern set contains recurring pattern i=" +
-		strconv.Itoa(int(e))
-}
 
 type ErrInvalidPattern struct {
 	err     error   // error with description
@@ -21,73 +13,74 @@ type ErrInvalidPattern struct {
 }
 
 func (e *ErrInvalidPattern) Error() string {
-	return "pattern set contains invalid pattern " +
-		string(e.pattern) + "; error: " + e.err.Error()
+	return "Invalid pattern " + string(e.pattern) + ": " + e.err.Error()
 }
 
-// Pattern contains regexp string
+type ErrRecurringPattern Pattern
+
+func (e ErrRecurringPattern) Error() string {
+	return "Recurring pattern " + string(e)
+}
+
 type Pattern string
 
 func (p Pattern) Compile() (*regexp.Regexp, error) {
 	return regexp.Compile(string(p))
 }
 
-// PatternSet keeps patterns for filtration
-type PatternSet struct {
-	prns []Pattern        // patterns
-	exps []*regexp.Regexp // Regexp objects
-}
+type PatternSet []Pattern
 
-func (ps PatternSet) Verify() error {
-	for i := 0; i < len(ps.prns); i++ {
-		// return error if there is invalid pattern
-		if _, err := ps.prns[i].Compile(); err != nil {
-			return &ErrInvalidPattern{err, ps.prns[i]}
-		}
-		for j := 0; j < len(ps.prns); j++ {
-			// return error if there is recurring patterns
-			if i != j && ps.prns[i] == ps.prns[j] {
-				return ErrRecurringPattern(j)
-			}
-		}
-	}
-	return nil
-}
-
-// Clear removes recuring and invalid patterns
 func (ps PatternSet) Clear() {
-	for i := 0; i < len(ps.prns); {
-		if _, err := ps.prns[i].Compile(); err != nil {
-			ps.prns = append(ps.prns[:i], ps.prns[i+1:]...)
-			continue
+	for {
+		if i, _ := ps.Verify(); i > -1 {
+			ps = append(ps[:i], ps[i+1:]...)
+		} else {
+			return
 		}
-		for j := 0; j < len(ps.prns); {
-			if i != j && ps.prns[i] == ps.prns[j] {
-				ps.prns = append(ps.prns[:j], ps.prns[j+1:]...)
-			} else {
-				j++
-			}
-		}
-		i++
 	}
 }
 
-func (ps PatternSet) Compile() error {
-	if err := ps.Verify(); err != nil {
-		return err
-	}
-	for _, pattern := range ps.prns {
-		if exp, err := pattern.Compile(); err == nil {
-			ps.exps = append(ps.exps, exp)
-		} else {
-			return err
+// Verify returns error and pattern index if there is an error
+func (ps PatternSet) Verify() (int, error) {
+	for i := 0; i < len(ps); i++ {
+		// return error if there is invalid pattern
+		if _, err := ps[i].Compile(); err != nil {
+			return i, &ErrInvalidPattern{err, ps[i]}
+		}
+		for j := 0; j < len(ps); j++ {
+			// return error if there is recurring patterns
+			if i != j && ps[i] == ps[j] {
+				return j, ErrRecurringPattern(ps[j])
+			}
 		}
 	}
-	return nil
+	return -1, nil
+}
+
+func (ps PatternSet) Compile() (ExpSet, error) {
+	es := make([]*regexp.Regexp, len(ps))
+	for i, pattern := range ps {
+		if exp, err := pattern.Compile(); err == nil {
+			es[i] = exp
+		} else {
+			return nil, err
+		}
+	}
+	return es, nil
+}
+
+type ExpSet []*regexp.Regexp
+
+func (es ExpSet) PatternSet() PatternSet {
+	ps := make(PatternSet, len(es))
+	for i, exp := range es {
+		ps[i] = Pattern(exp.String())
+	}
+	return ps
 }
 
 type Filter struct {
-	All, OrderName, OKDP, OKPD, OrganisationName PatternSet
+	All, OrderName, OKDP, OKPD, OrganisationName ExpSet
 	fname                                        string
 }
 
@@ -106,7 +99,7 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 	}
 	defer file.Close()
 	dec := json.NewDecoder(file)
-	patterns := make(map[string][]Pattern)
+	patterns := make(map[string]PatternSet)
 	err = dec.Decode(&patterns)
 	if err != nil {
 		if err == io.EOF {
@@ -114,36 +107,27 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 		}
 		return
 	}
-	filter.All.prns = patterns["All"]
-	filter.All.Clear()
-	filter.All.Compile()
-	filter.OrderName.prns = patterns["OrderName"]
-	filter.OrderName.Clear()
-	filter.OrderName.Compile()
-	filter.OKDP.prns = patterns["OKDP"]
-	filter.OKDP.Clear()
-	filter.OKDP.Compile()
-	filter.OKPD.prns = patterns["OKPD"]
-	filter.OKPD.Clear()
-	filter.OKPD.Compile()
-	filter.OrganisationName.prns = patterns["OrganisationName"]
-	filter.OrganisationName.Clear()
-	filter.OrganisationName.Compile()
-	return filter, nil
-}
-
-func (f *Filter) Save() error {
-	file, err := os.Create(f.fname)
-	if err != nil {
-		return err
+	if All, ok := patterns["All"]; ok {
+		All.Clear()
+		filter.All, _ = All.Compile()
 	}
-	return json.NewEncoder(file).Encode(map[string][]Pattern{
-		"All":              f.All.prns,
-		"OrderName":        f.OrderName.prns,
-		"OKDP":             f.OKDP.prns,
-		"OKPD":             f.OKPD.prns,
-		"OrganisationName": f.OrganisationName.prns,
-	})
+	if OrderName, ok := patterns["OrderName"]; ok {
+		OrderName.Clear()
+		filter.OrderName, _ = OrderName.Compile()
+	}
+	if OKDP, ok := patterns["OKDP"]; ok {
+		OKDP.Clear()
+		filter.OKDP, _ = OKDP.Compile()
+	}
+	if OKPD, ok := patterns["OKPD"]; ok {
+		OKPD.Clear()
+		filter.OKPD, _ = OKPD.Compile()
+	}
+	if OrganisationName, ok := patterns["OrganisationName"]; ok {
+		OrganisationName.Clear()
+		filter.OrganisationName, _ = OrganisationName.Compile()
+	}
+	return filter, nil
 }
 
 // Execute executes filter for order list and returns statistic
@@ -153,7 +137,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 		return orders, 0
 	}
 	// filter all fields
-	for _, exp := range f.All.exps {
+	for _, exp := range f.All {
 		for i := 0; i < len(orders); {
 			if exp.MatchString(orders[i].OrderName) ||
 				exp.MatchString(orders[i].OKDP) ||
@@ -166,7 +150,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 		}
 	}
 	// filter each fields
-	for _, exp := range f.OrderName.exps {
+	for _, exp := range f.OrderName {
 		for i := 0; i < len(orders); {
 			if exp.MatchString(orders[i].OrderName) {
 				orders = append(orders[:i], orders[i+1:]...)
@@ -175,7 +159,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 			}
 		}
 	}
-	for _, exp := range f.OKDP.exps {
+	for _, exp := range f.OKDP {
 		for i := 0; i < len(orders); {
 			if exp.MatchString(orders[i].OKDP) {
 				orders = append(orders[:i], orders[i+1:]...)
@@ -184,7 +168,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 			}
 		}
 	}
-	for _, exp := range f.OKPD.exps {
+	for _, exp := range f.OKPD {
 		for i := 0; i < len(orders); {
 			if exp.MatchString(orders[i].OKPD) {
 				orders = append(orders[:i], orders[i+1:]...)
@@ -193,7 +177,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 			}
 		}
 	}
-	for _, exp := range f.OrganisationName.exps {
+	for _, exp := range f.OrganisationName {
 		for i := 0; i < len(orders); {
 			if exp.MatchString(orders[i].OrganisationName) {
 				orders = append(orders[:i], orders[i+1:]...)
@@ -203,4 +187,18 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 		}
 	}
 	return orders, (1 - float32(len(orders))/float32(count))
+}
+
+func (f *Filter) Save() error {
+	file, err := os.Create(f.fname)
+	if err != nil {
+		return err
+	}
+	return json.NewEncoder(file).Encode(map[string]PatternSet{
+		"All":              f.All.PatternSet(),
+		"OrderName":        f.OrderName.PatternSet(),
+		"OKDP":             f.OKDP.PatternSet(),
+		"OKPD":             f.OKPD.PatternSet(),
+		"OrganisationName": f.OrganisationName.PatternSet(),
+	})
 }
