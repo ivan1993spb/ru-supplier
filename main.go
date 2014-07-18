@@ -49,5 +49,5 @@ func main() {
 		err = nil
 	}
 	server = NewServer()
-	StartInterface()
+	//StartInterface()
 }
