@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var rand_gen = rand.New(rand.NewSource(time.Now().UnixNano()))
+var RandGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 var user_agents = []string{
 	"Mozilla/4.0 (compatible; MSIE 6.0; Windows 98)",
@@ -78,7 +78,7 @@ func Load(rawurl string) (*http.Response, error) {
 		URL:   URL,
 		Proto: "HTTP/1.1",
 		Header: http.Header{
-			"User-Agent": {user_agents[rand_gen.Intn(len(user_agents))]},
+			"User-Agent": {user_agents[RandGen.Intn(len(user_agents))]},
 		},
 		Host: URL.Host,
 	})

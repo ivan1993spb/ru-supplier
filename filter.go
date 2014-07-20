@@ -31,7 +31,7 @@ func (p Pattern) Compile() (*regexp.Regexp, error) {
 type PatternSet []Pattern
 
 func (ps PatternSet) Clear() {
-	for {
+	for len(ps) > 0 {
 		if i, _ := ps.Verify(); i > -1 {
 			ps = append(ps[:i], ps[i+1:]...)
 		} else {
@@ -107,27 +107,57 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 		}
 		return
 	}
-	if _, ok := patterns["All"]; ok {
-		patterns["All"].Clear()
-		filter.All, _ = patterns["All"].Compile()
+	if _, ok := patterns["All"]; ok && len(patterns["All"]) > 0 {
+		filter.SetExpsAll(patterns["All"])
 	}
-	if _, ok := patterns["OrderName"]; ok {
-		patterns["OrderName"].Clear()
-		filter.OrderName, _ = patterns["OrderName"].Compile()
+	if _, ok := patterns["OrderName"]; ok && len(patterns["OrderName"]) > 0 {
+		filter.SetExpsOrderName(patterns["OrderName"])
 	}
-	if _, ok := patterns["OKDP"]; ok {
-		patterns["OKDP"].Clear()
-		filter.OKDP, _ = patterns["OKDP"].Compile()
+	if _, ok := patterns["OKDP"]; ok && len(patterns["OKDP"]) > 0 {
+		filter.SetExpsOKDP(patterns["OKDP"])
 	}
-	if _, ok := patterns["OKPD"]; ok {
-		patterns["OKPD"].Clear()
-		filter.OKPD, _ = patterns["OKPD"].Compile()
+	if _, ok := patterns["OKPD"]; ok && len(patterns["OKPD"]) > 0 {
+		filter.SetExpsOKPD(patterns["OKPD"])
 	}
-	if _, ok := patterns["OrganisationName"]; ok {
-		patterns["OrganisationName"].Clear()
-		filter.OrganisationName, _ = patterns["OrganisationName"].Compile()
+	if _, ok := patterns["OrganisationName"]; ok && len(patterns["OrganisationName"]) > 0 {
+		filter.SetExpsOrganisationName(patterns["OrganisationName"])
 	}
 	return filter, nil
+}
+
+func (f *Filter) SetExpsAll(ps PatternSet) {
+	if len(ps) > 0 {
+		ps.Clear()
+	}
+	f.All, _ = ps.Compile()
+}
+
+func (f *Filter) SetExpsOrderName(ps PatternSet) {
+	if len(ps) > 0 {
+		ps.Clear()
+	}
+	f.OrderName, _ = ps.Compile()
+}
+
+func (f *Filter) SetExpsOKDP(ps PatternSet) {
+	if len(ps) > 0 {
+		ps.Clear()
+	}
+	f.OKDP, _ = ps.Compile()
+}
+
+func (f *Filter) SetExpsOKPD(ps PatternSet) {
+	if len(ps) > 0 {
+		ps.Clear()
+	}
+	f.OKPD, _ = ps.Compile()
+}
+
+func (f *Filter) SetExpsOrganisationName(ps PatternSet) {
+	if len(ps) > 0 {
+		ps.Clear()
+	}
+	f.OrganisationName, _ = ps.Compile()
 }
 
 // Execute executes filter for order list and returns statistic

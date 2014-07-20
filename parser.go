@@ -60,11 +60,13 @@ func (p *Parser) Parse(resp *http.Response) ([]*Order, error) {
 	// cut delim \n
 	newest_chunk = newest_chunk[:len(newest_chunk)-1]
 	// check for updates
-	hash := md5.New()
-	hash.Write(newest_chunk)
-	if bytes.Compare(checking_chunk, hash.Sum(nil)) == 0 {
-		// return if feed was not updated
-		return nil, nil
+	if exists {
+		hash := md5.New()
+		hash.Write(newest_chunk)
+		if bytes.Compare(checking_chunk, hash.Sum(nil)) == 0 {
+			// return if feed was not updated
+			return nil, nil
+		}
 	}
 	// save newest chunk in cache
 	p.SetHashChunk(rawurl, newest_chunk)

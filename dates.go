@@ -11,8 +11,6 @@ import (
 // zakupki.goc.ru uses moscow time zone
 var MoscowTimeZone = time.FixedZone("MSK", 4*60*60)
 
-var ErrInvalidRusDate = errors.New("Invalid russian date format")
-
 func ParseRusFormatDate(date string) (time.Time, error) {
 	var null time.Time
 	if len(date) > 0 {
@@ -28,7 +26,7 @@ func ParseRusFormatDate(date string) (time.Time, error) {
 			}
 		}
 	}
-	return null, ErrInvalidRusDate
+	return null, errors.New("Invalid russian date format")
 }
 
 func RusFormatDate(t time.Time) string {

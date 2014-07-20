@@ -27,9 +27,9 @@ func LoadConfig(fname string) (conf *Config, err error) {
 	if len(fname) == 0 {
 		panic("config: invalid file name")
 	}
-	var file *os.File
 	conf = new(Config)
 	*conf = *defaultConfig
+	var file *os.File
 	file, err = os.Open(fname)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -86,4 +86,12 @@ func (c *Config) HTTPHost() (host string) {
 
 func (c *Config) SetFilterEnabled(flag bool) {
 	c.FilterEnabled = flag
+}
+
+func (c *Config) SetHost(host string) {
+	c.Host = host
+}
+
+func (c *Config) SetPort(port string) {
+	c.Port = port
 }

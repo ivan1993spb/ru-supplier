@@ -104,7 +104,7 @@ func LoadHashStore(fname string) (hs *HashStore, err error) {
 	return
 }
 
-func (hs *HashStore) Flush() error {
+func (hs *HashStore) Save() error {
 	if len(hs.data) == 0 {
 		hs.Remove()
 		return nil
@@ -118,8 +118,7 @@ func (hs *HashStore) Flush() error {
 	for _, pair := range hs.data {
 		data[hex.EncodeToString(pair.url)] = hex.EncodeToString(pair.chunk)
 	}
-	enc := json.NewEncoder(file)
-	return enc.Encode(data)
+	return json.NewEncoder(file).Encode(data)
 }
 
 func (hs *HashStore) GetHashChunk(rawurl string) ([]byte, bool) {

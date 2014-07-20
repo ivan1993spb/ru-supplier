@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -110,14 +111,14 @@ func MakeDescription(order *Order) string {
 	buff := bytes.NewBuffer(nil)
 	err := tmpl.Execute(buff, map[string]interface{}{
 		"Title":            MakeTitle(order),
-		"LawId":            order.LawId,
+		"LawId":            LawIdToString(order.LawId),
 		"Link":             MakeLink(order.OrderId),
 		"OrderName":        order.OrderName,
 		"OKDP":             order.OKDP,
 		"OKPD":             order.OKPD,
 		"StartFilingDate":  RusFormatDate(order.StartFilingDate),
 		"FinishFilingDate": RusFormatDate(order.FinishFilingDate),
-		"StartOrderPrice":  order.StartOrderPrice,
+		"StartOrderPrice":  FormatPrice(order.StartOrderPrice),
 		"CurrencyId":       order.CurrencyId,
 		"OrderType":        order.OrderType,
 		"OrderStage":       order.OrderStage,
@@ -146,7 +147,7 @@ func MakeLink(id string) string {
 		"&orderStages=PC&_orderStages=on",         // завершена;
 		"&orderStages=PA&_orderStages=on",         // отменена;
 		"&sortDirection=false&sortBy=UPDATE_DATE", // по убыванию даты публикации
-		"&recordsPerPage=_10&pageNo=1",            //
+		"&recordsPerPage=_10&pageNo=1",            // без этого не работает
 		"&searchString=", id,                      // поиск по ид;
 		"&strictEqual=false&morphology=false",
 		"&showLotsInfo=false&isPaging=false",
@@ -156,6 +157,35 @@ func MakeLink(id string) string {
 func MakeShortLink(id, host string) string {
 	return fmt.Sprintf("http://%s/%s?order=%s", host,
 		strings.TrimLeft(_PATH_TO_SHORT_LINKS, "/"), id)
+}
+
+func LawIdToString(law OrderLaw) string {
+	switch law {
+	case FZ44:
+		return "44-ФЗ"
+	case FZ223:
+		return "223-ФЗ"
+	case FZ94:
+		return "94-ФЗ"
+	}
+	return ""
+}
+
+func FormatPrice(p Price) string {
+	price := float64(p)
+	kop := math.Mod(price*100, 100)
+	output := fmt.Sprintf(",%02.f", kop)
+	price -= kop / 100
+	if price > 0 {
+		for price > 0 {
+			chunk := math.Mod(price, 1000)
+			price -= chunk
+			price /= 1000
+			output = fmt.Sprintf(" %03.f%s", chunk, output)
+		}
+		return strings.TrimLeft(output, "0 ")
+	}
+	return "0" + output
 }
 
 type Render struct {
@@ -176,6 +206,8 @@ func NewRender(config *Config) *Render {
 func (r *Render) Compose(title string, orders []*Order) {
 	if len(title) != 0 {
 		r.feed.Title = title
+	} else {
+		r.feed.Title = _DEFAULT_TITLE
 	}
 	r.feed.Items = make([]*feeds.RssItem, len(orders))
 	for i, order := range orders {
