@@ -26,7 +26,11 @@ func (e ErrResponseStatus) Error() string {
 	return "server return status " + http.StatusText(int(e))
 }
 
-func Parse(resp *http.Response) ([]*Order, error) {
+type Parser struct {
+	*HashStore
+}
+
+func (p *Parser) Parse(resp *http.Response) ([]*Order, error) {
 	if resp == nil {
 		panic("parse(): passed nil response")
 	}
@@ -47,7 +51,7 @@ func Parse(resp *http.Response) ([]*Order, error) {
 	rawurl := resp.Request.URL.String()
 	// get checking chunk
 	// checking chunk was newest chunk at last time
-	checking_chunk, exists := hashstore.GetHashChunk(rawurl)
+	checking_chunk, exists := p.GetHashChunk(rawurl)
 	// current newest chunk will checking chunk at next time
 	newest_chunk, err := brdr.ReadBytes('\n')
 	if err != nil {
@@ -63,7 +67,7 @@ func Parse(resp *http.Response) ([]*Order, error) {
 		return nil, nil
 	}
 	// save newest chunk in cache
-	hashstore.SetHashChunk(rawurl, newest_chunk)
+	p.SetHashChunk(rawurl, newest_chunk)
 	// convert newst chunk to order
 	row := regexp.MustCompile(`\s*;\s*`).
 		Split(string(newest_chunk), _ORDER_COLUMN_COUNT)

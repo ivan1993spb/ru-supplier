@@ -1,43 +1,13 @@
 package main
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
-	"html/template"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 )
-
-type ErrParsing uint8
-
-const (
-	_INVALID_LAW_ID ErrParsing = iota
-	_INVALID_EXHIBITION_NUMBER
-	_INVALID_START_ORDER_PRICE
-	_UNKNOWN_CURRENCY
-	_UNKNOWN_START_FILING_DATE
-	_UNKNOWN_FINISH_FILING_DATE
-)
-
-func (err ErrParsing) Error() string {
-	switch err {
-	case _INVALID_LAW_ID:
-		return "Invalid or unknown law id"
-	case _INVALID_EXHIBITION_NUMBER:
-		return "Invalid exhibition number"
-	case _INVALID_START_ORDER_PRICE:
-		return "Invalid start order price"
-	case _UNKNOWN_CURRENCY:
-		return "Unknown currency"
-	case _UNKNOWN_START_FILING_DATE:
-		return "Unknown start filing date"
-	case _UNKNOWN_FINISH_FILING_DATE:
-		return "Unknown finish filing date"
-	}
-	return "Unknown parsing error"
-}
 
 type OrderLaw int
 
@@ -57,7 +27,7 @@ func ParseLow(str string) (OrderLaw, error) {
 	case strings.Contains(str, "94"):
 		return FZ94, nil
 	}
-	return -1, _INVALID_LAW_ID
+	return -1, errors.New("Invalid or unknown law id")
 }
 
 func (l OrderLaw) String() string {
@@ -77,7 +47,7 @@ type Price float64
 func ParsePrice(str string) (Price, error) {
 	price, err := strconv.ParseFloat(str, 64)
 	if err != nil {
-		return 0, err
+		return 0, errors.New("Invalid order price")
 	}
 	// round order price with kopeika
 	if price < 0 {
@@ -89,7 +59,7 @@ func ParsePrice(str string) (Price, error) {
 	} else {
 		price = math.Floor(price)
 	}
-	return Price(price / 100), err
+	return Price(price / 100), nil
 }
 
 func (p Price) String() string {
@@ -125,30 +95,30 @@ const (
 	_FIELD_LAST_EVENT_DATE
 	_FIELD_ORDER_STAGE
 	_FIELD_FEATURES
-	_FIELD_START_DILING_DATE
-	_FIELD_FINISH_DILING_DATE
+	_FIELD_START_FILING_DATE
+	_FIELD_FINISH_FILING_DATE
 	_ORDER_COLUMN_COUNT // result column count
 )
 
 type Order struct {
-	LawId            OrderLaw // Номер ФЗ
-	OrderId          string   // Реестровый номер закупки
-	OrderType        string   // Способ размещения закупки
-	OrderName        string   // Наименование закупки
-	ExhibitionNumber int      // Номер лота
-	ExhibitionName   string   // Наименование лота
-	StartOrderPrice  Price    // Начальная (максимальная)
-	CurrencyId       string   // Код валюты
-	OKDP             string   // Классификация по ОКДП
-	OKPD             string   // Классификация по ОКПД
-	OrganisationName string   // Организация, размещающая заказ
-	PubDate          string   // Дата публикации
-	LastEventDate    string   // Дата последнего события
-	OrderStage       string   // Этап закупки (размещения заказа)
-	Features         string   // Особенности размещения заказа
-	StartDilingDate  string   // Дата начала подачи заявок
-	FinishDilingDate string   // Дата окончания подачи заявок
-	Errors           []error  // Ошибки при анализе закупки
+	LawId            OrderLaw  // Номер ФЗ
+	OrderId          string    // Реестровый номер закупки
+	OrderType        string    // Способ размещения закупки
+	OrderName        string    // Наименование закупки
+	ExhibitionNumber int       // Номер лота
+	ExhibitionName   string    // Наименование лота
+	StartOrderPrice  Price     // Начальная (максимальная) цена
+	CurrencyId       string    // Код валюты
+	OKDP             string    // Классификация по ОКДП
+	OKPD             string    // Классификация по ОКПД
+	OrganisationName string    // Организация, размещающая заказ
+	PubDate          time.Time // Дата публикации
+	LastEventDate    time.Time // Дата последнего события
+	OrderStage       string    // Этап закупки (размещения заказа)
+	Features         string    // Особенности размещения заказа
+	StartFilingDate  time.Time // Дата начала подачи заявок
+	FinishFilingDate time.Time // Дата окончания подачи заявок
+	Errors           []error   // Ошибки при анализе закупки
 }
 
 func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
@@ -161,50 +131,50 @@ func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
 		OKDP:             row[_FIELD_OKDP],
 		OKPD:             row[_FIELD_OKPD],
 		OrganisationName: row[_FIELD_ORGANISATION_NAME],
-		PubDate:          row[_FIELD_PUB_DATE],
-		LastEventDate:    row[_FIELD_LAST_EVENT_DATE],
 		OrderStage:       row[_FIELD_ORDER_STAGE],
 		Features:         row[_FIELD_FEATURES],
 	}
-
 	var err error
 	order.LawId, err = ParseLow(row[_FIELD_LAW_ID])
 	if err != nil {
-		order.PushError(_INVALID_LAW_ID)
+		order.PushError(err)
 		err = nil
 	}
-
 	if len(row[_FIELD_EXHIBITION_NUMBER]) > 0 {
-		// Только для многолотовых закупок фз 223
-		order.ExhibitionNumber, err = strconv.Atoi(
-			row[_FIELD_EXHIBITION_NUMBER])
+		// Только для многолотовых закупок по ФЗ 223
+		order.ExhibitionNumber, err = strconv.Atoi(row[_FIELD_EXHIBITION_NUMBER])
 		if err != nil {
-			order.PushError(_INVALID_EXHIBITION_NUMBER)
+			order.PushError(errors.New("Invalid exhibition number"))
 			err = nil
 		}
 	}
 	order.StartOrderPrice, err = ParsePrice(row[_FIELD_START_ORDER_PRICE])
 	if err != nil {
-		order.PushError(_INVALID_START_ORDER_PRICE)
+		order.PushError(err)
 		err = nil
 	}
 	if len(row[_FIELD_CURRENCY_ID]) == 0 {
-		order.PushError(_UNKNOWN_CURRENCY)
+		order.PushError(errors.New("Unknown currency"))
 	}
-	if len(row[_FIELD_START_DILING_DATE]) == 0 {
-		// Когда по какой-то причине в csv файле отсутствует дата
-		// начала приема заявок, назначаем дату последнего события
-		// и выводим ошибку
-		order.StartDilingDate = row[_FIELD_LAST_EVENT_DATE]
-		order.PushError(_UNKNOWN_START_FILING_DATE)
-	} else {
-		order.StartDilingDate = row[_FIELD_START_DILING_DATE]
+	order.PubDate, err = ParseRusFormatDate(row[_FIELD_PUB_DATE])
+	if err != nil {
+		order.PushError(errors.New("Unknown publish date"))
+		err = nil
 	}
-	if len(row[_FIELD_FINISH_DILING_DATE]) == 0 {
-		// отсутствует дата окончания приема заявок
-		order.PushError(_UNKNOWN_FINISH_FILING_DATE)
-	} else {
-		order.FinishDilingDate = row[_FIELD_FINISH_DILING_DATE]
+	order.LastEventDate, err = ParseRusFormatDate(row[_FIELD_LAST_EVENT_DATE])
+	if err != nil {
+		order.PushError(errors.New("Unknown last event date"))
+		err = nil
+	}
+	order.StartFilingDate, err = ParseRusFormatDate(row[_FIELD_START_FILING_DATE])
+	if err != nil {
+		order.PushError(errors.New("Unknown start filing date"))
+		err = nil
+	}
+	order.FinishFilingDate, err = ParseRusFormatDate(row[_FIELD_FINISH_FILING_DATE])
+	if err != nil {
+		order.PushError(errors.New("Unknown finish filing date"))
+		err = nil
 	}
 	return
 }
@@ -214,151 +184,3 @@ func (order *Order) PushError(err error) {
 		order.Errors = append(order.Errors, err)
 	}
 }
-
-func (order *Order) Title() (title string) {
-	title = "№" + order.OrderId
-	if order.ExhibitionNumber > 0 {
-		title += " Лот " + strconv.Itoa(order.ExhibitionNumber)
-	}
-	return
-}
-
-func (order *Order) Link() string {
-	return MakeLink(order.OrderId)
-}
-
-func (order *Order) ShortLink() string {
-	return fmt.Sprintf("http://%s/%s?order=%s", config.HTTPHost(),
-		strings.TrimLeft(_PATH_TO_SHORT_LINKS, "/"), order.OrderId)
-}
-
-func (order *Order) Description() string {
-	buff := bytes.NewBuffer(nil)
-	err := tmpl.Execute(buff, order)
-	if err != nil {
-		return "template execution error: " + err.Error()
-	}
-	return buff.String()
-}
-
-func (order *Order) PubDateRFC1123() string {
-	chunks := strings.SplitN(order.PubDate, ".", 3)
-	if len(chunks) != 3 {
-		// Bad date format
-		return order.PubDate
-	}
-	day, err := strconv.Atoi(chunks[0])
-	if err != nil {
-		return order.PubDate
-	}
-	month, err := strconv.Atoi(chunks[1])
-	if err != nil {
-		return order.PubDate
-	}
-	year, err := strconv.Atoi(chunks[2])
-	if err != nil {
-		return order.PubDate
-	}
-	return time.Date(year, time.Month(month), day,
-		0, 0, 0, 0, time.Local).Format(time.RFC1123)
-}
-
-func MakeLink(order_id string) string {
-	return fmt.Sprint("http://zakupki.gov.ru",
-		"/epz/order/quicksearch/update.html",
-		"?placeOfSearch=FZ_44&_placeOfSearch=on",  // ФЗ 44;
-		"&placeOfSearch=FZ_223&_placeOfSearch=on", // ФЗ 223;
-		"&placeOfSearch=FZ_94&_placeOfSearch=on",  // ФЗ 94;
-		"&priceFrom=0&priceTo=200+000+000+000",    // любая НМЦК;
-		"&publishDateFrom=&publishDateTo=",        // выкл. диапозоны
-		"&updateDateFrom=&updateDateTo=",          // времени;
-		"&orderStages=AF&_orderStages=on",         // подача заявок;
-		"&orderStages=CA&_orderStages=on",         // работа комиссии;
-		"&orderStages=PC&_orderStages=on",         // завершена;
-		"&orderStages=PA&_orderStages=on",         // отменена;
-		"&sortDirection=false&sortBy=UPDATE_DATE", // по убыванию...
-		"&recordsPerPage=_10&pageNo=1",            // даты публикации;
-		"&searchString=", order_id,                // поиск по ид;
-		"&strictEqual=false&morphology=false",
-		"&showLotsInfo=false&isPaging=false",
-		"&isHeaderClick=&checkIds=")
-}
-
-var tmpl = template.Must(template.New("tmpl").Parse(`<!DOCTYPE html>
-<html>
-	<head>
-		<title>{{.Title}}</title>
-		<style>
-			div, h1 {margin: 10px 0px;}
-			ul {margin: 10px 15px;}
-			h1 {font-size: 15pt;}
-			a, s {text-decoration: none;}
-			a {color: #000;}
-			a:hover {background-color: #444; color: #fff;}
-			s {color: #f00;}
-			b {color: #999; margin-right: 8px;}
-			i {color: #89f;}
-		</style>
-	</head>
-	<body>
-		<h1>
-			<b>{{if .LawId}}{{.LawId}}{{else}}??-ФЗ{{end}}</b>
-			{{.Title}}
-		</h1>
-		<div>
-			<a href="{{.Link}}">
-				{{if .OrderName}}{{.OrderName}}{{else}}unknown{{end}}
-			</a>
-		</div>
-		{{if .OKDP}}
-			<div><b>ОКДП:</b> {{.OKDP}}</div>
-		{{end}}
-		{{if .OKPD}}
-			<div><b>ОКПД:</b> {{.OKPD}}</div>
-		{{end}}
-		<div>
-			<b>Сроки подачи заявки:</b>
-			с
-			{{if .StartDilingDate}}{{.StartDilingDate}}
-			{{else}}00.00.0000{{end}}
-			по
-			<s>
-				{{if .FinishDilingDate}}{{.FinishDilingDate}}
-				{{else}}00.00.0000{{end}}
-			</s>
-		</div>
-		<div>
-			<b>Начальная (максимальная) цена:</b>
-			{{.StartOrderPrice}}
-			{{if .CurrencyId}}{{.CurrencyId}}
-			{{else}}unknown currency{{end}}
-		</div>
-		<hr />
-		{{if .OrderType}}
-			<div><b>Тип закупки:</b> {{.OrderType}}</div>
-		{{end}}
-		{{if .OrderStage}}
-			<div><b>Этап закупки:</b> {{.OrderStage}}</div>
-		{{end}}
-		{{if .PubDate}}
-			<div><b>Дата публикации извещения:</b> {{.PubDate}}</div>
-		{{end}}
-		{{if .OrganisationName}}
-			<div><b>Организация:</b> {{.OrganisationName}}</div>
-		{{end}}
-		{{if .Features}}
-			<div><i>{{.Features}}</i></div>
-		{{end}}
-		{{if .Errors}}
-			<hr />
-			<div>
-				<s>Проверьте извещение</s>, были обнаружены ошибки:
-			</div>
-			<ul>
-				{{range .Errors}}
-					<li>{{.}}</li>
-				{{end}}
-			</ul>
-		{{end}}
-	</body>
-</html>`))

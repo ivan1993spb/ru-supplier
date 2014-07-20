@@ -93,7 +93,6 @@ func LoadHashStore(fname string) (hs *HashStore, err error) {
 	for url, chunk := range data {
 		hex_url, err := hex.DecodeString(url)
 		if err != nil {
-			// corrupted data
 			continue
 		}
 		hex_chunk, err := hex.DecodeString(chunk)

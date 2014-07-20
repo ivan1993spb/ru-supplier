@@ -107,25 +107,25 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 		}
 		return
 	}
-	if All, ok := patterns["All"]; ok {
-		All.Clear()
-		filter.All, _ = All.Compile()
+	if _, ok := patterns["All"]; ok {
+		patterns["All"].Clear()
+		filter.All, _ = patterns["All"].Compile()
 	}
-	if OrderName, ok := patterns["OrderName"]; ok {
-		OrderName.Clear()
-		filter.OrderName, _ = OrderName.Compile()
+	if _, ok := patterns["OrderName"]; ok {
+		patterns["OrderName"].Clear()
+		filter.OrderName, _ = patterns["OrderName"].Compile()
 	}
-	if OKDP, ok := patterns["OKDP"]; ok {
-		OKDP.Clear()
-		filter.OKDP, _ = OKDP.Compile()
+	if _, ok := patterns["OKDP"]; ok {
+		patterns["OKDP"].Clear()
+		filter.OKDP, _ = patterns["OKDP"].Compile()
 	}
-	if OKPD, ok := patterns["OKPD"]; ok {
-		OKPD.Clear()
-		filter.OKPD, _ = OKPD.Compile()
+	if _, ok := patterns["OKPD"]; ok {
+		patterns["OKPD"].Clear()
+		filter.OKPD, _ = patterns["OKPD"].Compile()
 	}
-	if OrganisationName, ok := patterns["OrganisationName"]; ok {
-		OrganisationName.Clear()
-		filter.OrganisationName, _ = OrganisationName.Compile()
+	if _, ok := patterns["OrganisationName"]; ok {
+		patterns["OrganisationName"].Clear()
+		filter.OrganisationName, _ = patterns["OrganisationName"].Compile()
 	}
 	return filter, nil
 }

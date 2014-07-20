@@ -83,3 +83,7 @@ func (c *Config) HTTPHost() (host string) {
 	}
 	return
 }
+
+func (c *Config) SetFilterEnabled(flag bool) {
+	c.FilterEnabled = flag
+}
