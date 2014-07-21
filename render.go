@@ -222,7 +222,9 @@ func (r *Render) Compose(title string, orders []*Order) {
 }
 
 func (r *Render) WriteTo(w io.Writer) error {
-	w.Write([]byte(xml.Header))
+	if _, err := io.WriteString(w, xml.Header); err != nil {
+		return err
+	}
 	defer func() {
 		r.feed.Title = _DEFAULT_TITLE
 		r.feed.Items = nil

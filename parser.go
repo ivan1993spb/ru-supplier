@@ -7,6 +7,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 )
@@ -74,6 +75,9 @@ func (p *Parser) Parse(resp *http.Response) ([]*Order, error) {
 	}
 	// save newest chunk in cache
 	p.SetHashChunk(rawurl, newest_chunk)
+	if err = p.Save(); err != nil {
+		log.Println("can't save cache:", err)
+	}
 	// convert newst chunk to order
 	row := regexp.MustCompile(`\s*;\s*`).
 		Split(string(newest_chunk), _ORDER_COLUMN_COUNT)

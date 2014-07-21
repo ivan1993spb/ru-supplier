@@ -142,7 +142,7 @@ func (hs *HashStore) Save() error {
 func (hs *HashStore) GetHashChunk(rawurl string) ([]byte, bool) {
 	if len(rawurl) > 0 {
 		hash := md5.New()
-		hash.Write([]byte(rawurl))
+		io.WriteString(hash, rawurl)
 		url := hash.Sum(nil)
 		for _, pair := range hs.data {
 			if bytes.Compare(pair.url, url) == 0 {
@@ -159,7 +159,7 @@ func (hs *HashStore) SetHashChunk(rawurl string, chunk []byte) {
 		return
 	}
 	hash := md5.New()
-	hash.Write([]byte(rawurl))
+	io.WriteString(hash, rawurl)
 	url := hash.Sum(nil)
 	hash.Reset()
 	hash.Write(chunk)

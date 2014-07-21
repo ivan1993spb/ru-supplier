@@ -65,7 +65,7 @@ var user_agents = []string{
 
 func Load(rawurl string) (*http.Response, error) {
 	if len(rawurl) == 0 {
-		return nil, errors.New("load(): passed empty string")
+		return nil, errors.New("can't load: passed empty url string")
 	}
 	URL, err := url.Parse(rawurl)
 	if err != nil {

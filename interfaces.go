@@ -24,8 +24,3 @@ type FiltIn interface {
 	SetExpsOrganisationName(PatternSet)
 	Save() error
 }
-
-// type CachIn interface {
-// 	Save() error
-// 	Remove() error
-// }
