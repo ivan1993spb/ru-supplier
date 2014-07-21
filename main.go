@@ -6,10 +6,9 @@ import (
 )
 
 const (
-	_LOG_FILE_NAME        = "errors.log"
-	_HASH_STORE_FILE_NAME = "cache.json"
-	_CONFIG_FILE_NAME     = "config.json"
-	_FILTERS_FILE_NAME    = "filters.json"
+	_LOG_FILE_NAME     = "log.log"
+	_CONFIG_FILE_NAME  = "config.json"
+	_FILTERS_FILE_NAME = "filters.json"
 )
 
 func main() {
@@ -23,24 +22,28 @@ func main() {
 		log.SetFlags(log.LstdFlags)
 		log.SetOutput(logfile)
 	}
-	hashstore, err := LoadHashStore(_HASH_STORE_FILE_NAME)
-	if err != nil && hashstore == nil {
-		log.Fatal("cannot load hashstore:", err)
-	} else if err != nil {
-		log.Println("hashstore:", err)
-	}
 	config, err := LoadConfig(_CONFIG_FILE_NAME)
-	if err != nil && config == nil {
-		log.Fatal("cannot load configs:", err)
-	} else if err != nil {
-		log.Println("configs:", err)
+	if config == nil {
+		if err != nil {
+			log.Fatal("cannot load configs:", err)
+		} else {
+			panic("config is nil")
+		}
+	}
+	if err != nil {
+		log.Println("config:", err)
 	}
 	filter, err := LoadFilter(_FILTERS_FILE_NAME)
-	if err != nil && filter == nil {
-		log.Fatal("cannot load filters:", err)
-	} else if err != nil {
-		log.Println("filters:", err)
+	if filter == nil {
+		if err != nil {
+			log.Fatal("cannot load filters:", err)
+		} else {
+			panic("filter is nil")
+		}
 	}
-	NewServer(config, filter, hashstore)
-	// StartInterface(server, config, filter, hashstore)
+	if err != nil {
+		log.Println("filter:", err)
+	}
+	// server := NewServer(config, filter)
+	// StartInterface(server, config, filter)
 }

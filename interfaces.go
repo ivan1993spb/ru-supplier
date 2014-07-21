@@ -1,11 +1,12 @@
 package main
 
-type InterfaceStarter func(ServIn, ConfIn, FiltIn, CachIn) error
+type InterfaceStarter func(ServIn, ConfIn, FiltIn) error
 
 type ServIn interface {
 	Start() error
 	ShutDown() error
 	IsRunning() bool
+	RemoveCache() error
 }
 
 type ConfIn interface {
@@ -24,7 +25,7 @@ type FiltIn interface {
 	Save() error
 }
 
-type CachIn interface {
-	Save() error
-	Remove() error
-}
+// type CachIn interface {
+// 	Save() error
+// 	Remove() error
+// }

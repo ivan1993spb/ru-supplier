@@ -24,20 +24,17 @@ type Server struct {
 	lis    net.Listener
 }
 
-func NewServer(config *Config, filter *Filter, hashstore *HashStore) (s *Server) {
+func NewServer(config *Config, filter *Filter) (s *Server) {
 	if config == nil {
-		log.Fatal("server: passed nil config")
+		panic("server: passed nil config")
 	}
 	if filter == nil {
-		log.Fatal("server: passed nil filter")
-	}
-	if hashstore == nil {
-		log.Fatal("server: passed nil hashstore")
+		panic("server: passed nil filter")
 	}
 	s = &Server{
 		http.NewServeMux(),
 		&sync.WaitGroup{},
-		&Parser{hashstore},
+		NewParser(),
 		filter,
 		config,
 		NewRender(config),
@@ -65,6 +62,14 @@ func (s *Server) ShutDown() error {
 	return s.lis.Close()
 }
 
+func (s *Server) RemoveCache() error {
+	return s.parser.RemoveCache()
+}
+
+func (s *Server) IsRunning() bool {
+	return s.lis != nil
+}
+
 func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	s.Add(1) // signal that yet another request is processed
 	defer r.Body.Close()
@@ -79,6 +84,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil && err != io.EOF {
 			log.Println("can't read or parse response: ", err)
 		}
+		log.Printf("loaded %d orders\n", len(orders))
 		if s.config.FilterEnabled && len(orders) > 0 {
 			var filtered float32
 			orders, filtered = s.filter.Execute(orders)
@@ -111,8 +117,4 @@ func (s *Server) ShortLinkHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, MakeLink(r.Form.Get("order")),
 			http.StatusFound)
 	}
-}
-
-func (s *Server) IsRunning() bool {
-	return s.lis != nil
 }

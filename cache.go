@@ -6,8 +6,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"log"
 	"os"
 )
+
+const _HASH_STORE_FILE_NAME = "cache.json"
 
 // CacheReader reads while does not find chunk which md5 hash sum
 // will matches with passed checking hash
@@ -65,6 +68,21 @@ type HashPair struct {
 type HashStore struct {
 	fname string // file name
 	data  []*HashPair
+}
+
+func LoadHashStoreSimple() *HashStore {
+	hs, err := LoadHashStore(_HASH_STORE_FILE_NAME)
+	if hs == nil {
+		if err != nil {
+			log.Fatal("cannot load hashstore:", err)
+		} else {
+			panic("hashstore is nil")
+		}
+	}
+	if err != nil {
+		log.Println("hashstore:", err)
+	}
+	return hs
 }
 
 func LoadHashStore(fname string) (hs *HashStore, err error) {

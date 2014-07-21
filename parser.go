@@ -30,6 +30,10 @@ type Parser struct {
 	*HashStore
 }
 
+func NewParser() *Parser {
+	return &Parser{LoadHashStoreSimple()}
+}
+
 func (p *Parser) Parse(resp *http.Response) ([]*Order, error) {
 	if resp == nil {
 		panic("parse(): passed nil response")
@@ -110,4 +114,8 @@ func (p *Parser) Parse(resp *http.Response) ([]*Order, error) {
 		}
 	}
 	return orders, nil
+}
+
+func (p *Parser) RemoveCache() error {
+	return p.Remove()
 }
