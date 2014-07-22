@@ -128,46 +128,36 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 func (f *Filter) SetExpsAll(ps PatternSet) {
 	if len(ps) > 0 {
 		ps.Clear()
-		if len(ps) > 0 {
-			f.All, _ = ps.Compile()
-		}
 	}
+	f.All, _ = ps.Compile()
 }
 
 func (f *Filter) SetExpsOrderName(ps PatternSet) {
 	if len(ps) > 0 {
 		ps.Clear()
-		if len(ps) > 0 {
-			f.OrderName, _ = ps.Compile()
-		}
 	}
+	f.OrderName, _ = ps.Compile()
 }
 
 func (f *Filter) SetExpsOKDP(ps PatternSet) {
 	if len(ps) > 0 {
 		ps.Clear()
-		if len(ps) > 0 {
-			f.OKDP, _ = ps.Compile()
-		}
 	}
+	f.OKDP, _ = ps.Compile()
 }
 
 func (f *Filter) SetExpsOKPD(ps PatternSet) {
 	if len(ps) > 0 {
 		ps.Clear()
-		if len(ps) > 0 {
-			f.OKPD, _ = ps.Compile()
-		}
 	}
+	f.OKPD, _ = ps.Compile()
 }
 
 func (f *Filter) SetExpsOrganisationName(ps PatternSet) {
 	if len(ps) > 0 {
 		ps.Clear()
-		if len(ps) > 0 {
-			f.OrganisationName, _ = ps.Compile()
-		}
 	}
+	f.OrganisationName, _ = ps.Compile()
 }
 
 // Execute executes filter for order list and returns statistic
