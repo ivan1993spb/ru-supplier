@@ -64,7 +64,7 @@ func (p *Parser) Parse(resp *http.Response) ([]*Order, error) {
 	}
 	// cut delim \n
 	newest_chunk = newest_chunk[:len(newest_chunk)-1]
-	// check for updates
+	// check for updates if exists data in hashstore
 	if exists {
 		hash := md5.New()
 		hash.Write(newest_chunk)

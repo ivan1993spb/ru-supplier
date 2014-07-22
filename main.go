@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	_LOG_FILE_NAME     = "log.log"
+	_LOG_FILE_NAME     = "prog.log"
 	_CONFIG_FILE_NAME  = "config.json"
 	_FILTERS_FILE_NAME = "filters.json"
 )

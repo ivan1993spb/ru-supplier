@@ -16,7 +16,7 @@ import "github.com/gorilla/feeds"
 
 const (
 	_DEFAULT_TITLE    = "Закупки"
-	_FEED_DESCRIPTION = "Удобная лента закупок с гибким фильтром"
+	_FEED_DESCRIPTION = "Удобная лента закупок с гибким механизмом фильтрации"
 	_FEED_LINK        = "http://zakupki.gov.ru"
 )
 
@@ -204,10 +204,10 @@ func NewRender(config *Config) *Render {
 }
 
 func (r *Render) Compose(title string, orders []*Order) {
-	if len(title) != 0 {
-		r.feed.Title = title
-	} else {
+	if len(title) == 0 {
 		r.feed.Title = _DEFAULT_TITLE
+	} else {
+		r.feed.Title = title
 	}
 	r.feed.Items = make([]*feeds.RssItem, len(orders))
 	for i, order := range orders {
