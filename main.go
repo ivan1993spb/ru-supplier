@@ -45,7 +45,7 @@ func main() {
 		log.Println("filter:", err)
 	}
 	server := NewServer(config, filter)
-	if err = InterfaceStart(server, config, filter); err != nil {
+	if err = InterfaceStart(server, config); err != nil {
 		log.Fatal("interface fatal error:", err)
 	}
 }

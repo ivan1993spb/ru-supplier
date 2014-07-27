@@ -11,16 +11,16 @@ type ServIn interface {
 
 type ConfIn interface {
 	SetFilterEnabled(bool)
-	SetHost(string)
-	SetPort(string)
+	// SetHost(string)
+	// SetPort(string)
 	Save() error
 }
 
 type FiltIn interface {
-	SetExpsAll(PatternSet)
-	SetExpsOrderName(PatternSet)
-	SetExpsOKDP(PatternSet)
-	SetExpsOKPD(PatternSet)
-	SetExpsOrganisationName(PatternSet)
-	Save() error
+	// SetExpsAll(PatternSet)
+	// SetExpsOrderName(PatternSet)
+	// SetExpsOKDP(PatternSet)
+	// SetExpsOKPD(PatternSet)
+	// SetExpsOrganisationName(PatternSet)
+	// Save() error
 }

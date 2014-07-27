@@ -10,7 +10,7 @@ import (
 
 var RandGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-var user_agents = []string{
+var UserAgents = []string{
 	"Mozilla/4.0 (compatible; MSIE 6.0; Windows 98)",
 	"Mozilla/4.0 (compatible; MSIE 5.5; Windows NT 5.0; .NET CLR 1.0.3705)",
 	"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Maxthon)",
@@ -78,7 +78,7 @@ func Load(rawurl string) (*http.Response, error) {
 		URL:   URL,
 		Proto: "HTTP/1.1",
 		Header: http.Header{
-			"User-Agent": {user_agents[RandGen.Intn(len(user_agents))]},
+			"User-Agent": {UserAgents[RandGen.Intn(len(UserAgents))]},
 		},
 		Host: URL.Host,
 	})
