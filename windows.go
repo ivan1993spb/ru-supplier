@@ -1,12 +1,82 @@
 package main
 
 import (
+	"bufio"
+	"errors"
+	"io"
 	"log"
+	"os"
 	"os/exec"
+	"path"
+	"strings"
+	"syscall"
 )
 import "github.com/lxn/walk"
 
 const _PROGRAMM_ICON_FILE_NAME = "eagle.ico"
+
+func FreeConsole() error {
+	kernel32, err := syscall.LoadLibrary("kernel32.dll")
+	if err != nil {
+		return err
+	}
+	freeConsole, err := syscall.GetProcAddress(
+		kernel32,
+		"FreeConsole",
+	)
+	if err != nil {
+		return err
+	}
+	_, _, errnum := syscall.Syscall(uintptr(freeConsole), 0, 0, 0, 0)
+	if errnum != 0 {
+		return errors.New("syscall return error code")
+	}
+	return nil
+}
+
+func CreateLocalHost(host string) error {
+	if len(host) == 0 {
+		panic("passed empty host")
+	}
+	if root := os.Getenv("SystemRoot"); len(root) > 0 {
+		fhosts, err := os.OpenFile(
+			path.Join(root, "system32", "drivers", "etc", "hosts"),
+			os.O_RDWR, /*|os.O_APPEND|os.O_CREATE*/
+			os.ModePerm,
+		)
+		r := bufio.NewReader(fhosts)
+		for {
+			line, err := r.ReadString('\n')
+			if err != nil && err != io.EOF {
+				return errors.New("cannot read hosts file: " + err.Error())
+			}
+			if err == io.EOF && len(line) == 0 {
+				break
+			}
+			if line[0] == '#' {
+				continue
+			}
+			fields := strings.Fields(line)
+			if len(fields) > 1 {
+				for i := 1; i < len(fields); i++ {
+					if fields[i] == host {
+						return nil
+					}
+				}
+			}
+			if err == io.EOF {
+				break
+			}
+		}
+		// _, err = fhosts.WriteString("127.0.0.1\t" + host)
+		return err
+	}
+	return errors.New("cannot get system root")
+}
+
+func RemoveLocalHost(host string) error {
+	return nil
+}
 
 func InterfaceStart(server *Server, config *Config) error {
 	if server == nil {
@@ -15,6 +85,31 @@ func InterfaceStart(server *Server, config *Config) error {
 	if config == nil {
 		panic("interface error: passed nil config")
 	}
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                         INITIALIZATION                        *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+	var err error
+	// free console
+	// if err = FreeConsole(); err != nil {
+	// 	log.Println("cannot free console:", err)
+	// }
+	if !server.IsRunning() {
+		// edit etc/hosts
+		if err = CreateLocalHost(config.Host); err != nil {
+			log.Println("cannot create local addr:", err)
+		}
+		// start server
+		// if err = server.Start(); err != nil {
+		// 	return err
+		// }
+	}
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                       END INITIALIZATION                      *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 	mw, err := walk.NewMainWindow()
 	if err != nil {
 		return err
@@ -38,7 +133,7 @@ func InterfaceStart(server *Server, config *Config) error {
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                            ACTIONS                      *
+	 *                            ACTIONS                            *
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 	startServerAction := walk.NewAction()
@@ -57,6 +152,9 @@ func InterfaceStart(server *Server, config *Config) error {
 		return err
 	}
 
+	// // // // // // // // // // // // // // // // // // // //
+	// // // // // // // // // // // // // // // // // // // //
+	// // // // // // // // // // // // // // // // // // // //
 	// hide start button if server is running else hide stop button
 	updateServerButtons := func() {
 		if server.IsRunning() {
@@ -82,6 +180,9 @@ func InterfaceStart(server *Server, config *Config) error {
 		}
 	}
 	updateServerButtons()
+	// // // // // // // // // // // // // // // // // // // //
+	// // // // // // // // // // // // // // // // // // // //
+	// // // // // // // // // // // // // // // // // // // //
 
 	filterEnableAction := walk.NewAction()
 	if err = filterEnableAction.SetText(_ACTION_TITLE_FILTER_ENABLED); err != nil {
@@ -99,6 +200,9 @@ func InterfaceStart(server *Server, config *Config) error {
 		return err
 	}
 
+	// // // // // // // // // // // // // // // // // // // //
+	// // // // // // // // // // // // // // // // // // // //
+	// // // // // // // // // // // // // // // // // // // //
 	updateFilterButtons := func() {
 		if config.FilterEnabled {
 			if err = filterEnableAction.SetVisible(false); err != nil {
@@ -117,6 +221,9 @@ func InterfaceStart(server *Server, config *Config) error {
 		}
 	}
 	updateFilterButtons()
+	// // // // // // // // // // // // // // // // // // // //
+	// // // // // // // // // // // // // // // // // // // //
+	// // // // // // // // // // // // // // // // // // // //
 
 	removeCacheAction := walk.NewAction()
 	if err = removeCacheAction.SetText(_ACTION_TITLE_REMOVE_CACHE); err != nil {
@@ -202,9 +309,18 @@ func InterfaceStart(server *Server, config *Config) error {
 	})
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                             END                               *
+	 *                       END EVENT HANDLERS                      *
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 	mw.Run()
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                           FINALIZE                            *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+	// remove local host from etc/hosts
+	if err = RemoveLocalHost(config.Host); err != nil {
+		log.Println("cannot remove local host:", err)
+	}
 	return nil
 }

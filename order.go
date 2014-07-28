@@ -108,20 +108,17 @@ func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
 	order.LawId, err = ParseLow(row[_FIELD_LAW_ID])
 	if err != nil {
 		order.PushError(err)
-		err = nil
 	}
 	if len(row[_FIELD_EXHIBITION_NUMBER]) > 0 {
 		// Только для многолотовых закупок по ФЗ 223
 		order.ExhibitionNumber, err = strconv.Atoi(row[_FIELD_EXHIBITION_NUMBER])
 		if err != nil {
 			order.PushError(errors.New("Invalid exhibition number: " + err.Error()))
-			err = nil
 		}
 	}
 	order.StartOrderPrice, err = ParsePrice(row[_FIELD_START_ORDER_PRICE])
 	if err != nil {
 		order.PushError(errors.New("Invalid order price: " + err.Error()))
-		err = nil
 	}
 	if len(row[_FIELD_CURRENCY_ID]) == 0 {
 		order.PushError(errors.New("Unknown currency"))
@@ -129,22 +126,18 @@ func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
 	order.PubDate, err = ParseRusFormatDate(row[_FIELD_PUB_DATE])
 	if err != nil {
 		order.PushError(errors.New("Unknown publish date: " + err.Error()))
-		err = nil
 	}
 	order.LastEventDate, err = ParseRusFormatDate(row[_FIELD_LAST_EVENT_DATE])
 	if err != nil {
 		order.PushError(errors.New("Unknown last event date: " + err.Error()))
-		err = nil
 	}
 	order.StartFilingDate, err = ParseRusFormatDate(row[_FIELD_START_FILING_DATE])
 	if err != nil {
 		order.PushError(errors.New("Unknown start filing date: " + err.Error()))
-		err = nil
 	}
 	order.FinishFilingDate, err = ParseRusFormatDate(row[_FIELD_FINISH_FILING_DATE])
 	if err != nil {
 		order.PushError(errors.New("Unknown finish filing date: " + err.Error()))
-		err = nil
 	}
 	return
 }
