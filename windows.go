@@ -16,6 +16,13 @@ import "github.com/lxn/walk"
 const _PROGRAMM_ICON_FILE_NAME = "eagle.ico"
 
 const (
+	// require root privileges if true
+	_ALLOW_REWRITE_HOSTS_FILE = false
+	// false for debugging
+	_ALLOW_FREE_CONSOLE = false
+)
+
+const (
 	// _PROG_TITLE               = "Внимательный Поставщик"
 	// _PROG_VERSION             = "2.0"
 	// _NOTIFY_ICON_TOOL_TIP_MSG = _PROG_TITLE + " " + _PROG_VERSION
@@ -26,7 +33,8 @@ const (
 	_ACTION_TITLE_FILTER_DISABLED = "Не фильтровать"
 	_ACTION_TITLE_REMOVE_CACHE    = "Сбросить кэш"
 	_ACTION_TITLE_OPEN_DIR        = "Открыть папку"
-	_ACTION_TITLE_EXIT            = "Выход"
+	// _ACTION_TITLE_OPEN_README  = "Открыть инструкцию"
+	_ACTION_TITLE_EXIT = "Выход"
 
 	_TOOL_TIP_MESSAGE_SERVER_RUNNING = "Работает"
 	_TOOL_TIP_MESSAGE_SERVER_STOPPED = "Остановлен"
@@ -51,47 +59,11 @@ func FreeConsole() error {
 	return nil
 }
 
-func CreateLocalHost(host string) error {
-	if len(host) == 0 {
-		panic("passed empty host")
-	}
-	if root := os.Getenv("SystemRoot"); len(root) > 0 {
-		fhosts, err := os.OpenFile(
-			path.Join(root, "system32", "drivers", "etc", "hosts"),
-			os.O_RDWR, /*|os.O_APPEND|os.O_CREATE*/
-			os.ModePerm,
-		)
-		r := bufio.NewReader(fhosts)
-		for {
-			line, err := r.ReadString('\n')
-			if err != nil && err != io.EOF {
-				return errors.New("cannot read hosts file: " + err.Error())
-			}
-			if err == io.EOF && len(line) == 0 {
-				break
-			}
-			if line[0] == '#' {
-				continue
-			}
-			fields := strings.Fields(line)
-			if len(fields) > 1 {
-				for i := 1; i < len(fields); i++ {
-					if fields[i] == host {
-						return nil
-					}
-				}
-			}
-			if err == io.EOF {
-				break
-			}
-		}
-		// _, err = fhosts.WriteString("127.0.0.1\t" + host)
-		return err
-	}
-	return errors.New("cannot get system root")
+func CreateLocalHostIfNotExists(host string) error {
+	return nil
 }
 
-func RemoveLocalHost(host string) error {
+func RemoveLocalHostIfExists(host string) error {
 	return nil
 }
 
@@ -108,19 +80,23 @@ func InterfaceStart(server *Server, config *Config) error {
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 	var err error
-	// free console
-	// if err = FreeConsole(); err != nil {
-	// 	log.Println("cannot free console:", err)
-	// }
+	if _ALLOW_FREE_CONSOLE {
+		// free console
+		if err = FreeConsole(); err != nil {
+			log.Println("cannot free console:", err)
+		}
+	}
 	if !server.IsRunning() {
-		// edit etc/hosts
-		if err = CreateLocalHost(config.Host); err != nil {
-			log.Println("cannot create local addr:", err)
+		if _ALLOW_REWRITE_HOSTS_FILE {
+			// edit hosts file
+			if err = CreateLocalHostIfNotExists(config.Host); err != nil {
+				log.Println("cannot create local addr:", err)
+			}
 		}
 		// start server
-		// if err = server.Start(); err != nil {
-		// 	return err
-		// }
+		if err = server.Start(); err != nil {
+			return err
+		}
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -335,9 +311,18 @@ func InterfaceStart(server *Server, config *Config) error {
 	 *                           FINALIZE                            *
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-	// remove local host from etc/hosts
-	if err = RemoveLocalHost(config.Host); err != nil {
-		log.Println("cannot remove local host:", err)
+	if server.IsRunning() {
+		// shut down server
+		if err = server.ShutDown(); err != nil {
+			log.Println("cannot shut down server", err)
+		}
 	}
+	if _ALLOW_REWRITE_HOSTS_FILE {
+		// remove local host from hosts file
+		if err = RemoveLocalHostIfExists(config.Host); err != nil {
+			log.Println("cannot remove local host:", err)
+		}
+	}
+
 	return nil
 }

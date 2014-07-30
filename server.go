@@ -74,9 +74,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	s.Add(1) // signal that yet another request is processed
 	defer r.Body.Close()
 	var orders []*Order
-	if err := r.ParseForm(); err != nil {
-		log.Println("reading request error:", err)
-	} else if resp, err := Load(r.Form.Get("url")); err != nil {
+	if resp, err := Load(r.FormValue("url")); err != nil {
 		log.Println("loading error:", err)
 	} else {
 		defer resp.Body.Close()
