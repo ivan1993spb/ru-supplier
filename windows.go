@@ -2,12 +2,14 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
 	"syscall"
 )
@@ -59,12 +61,112 @@ func FreeConsole() error {
 	return nil
 }
 
+func FileHostsPath() string {
+	if root := os.Getenv("SystemRoot"); len(root) > 0 {
+		return path.Join(root, "system32", "drivers", "etc", "hosts")
+	}
+	return ""
+}
+
 func CreateLocalHostIfNotExists(host string) error {
-	return nil
+	if host = strings.TrimSpace(host); len(host) == 0 {
+		panic("passed empty host")
+	}
+	if hostsPath := FileHostsPath(); len(hostsPath) > 0 {
+		fhosts, err := os.OpenFile(
+			hostsPath,
+			os.O_RDWR|os.O_APPEND|os.O_CREATE,
+			os.ModePerm,
+		)
+		if err != nil {
+			return errors.New("cannot open hosts file: " +
+				err.Error())
+		}
+		defer fhosts.Close()
+		r := bufio.NewReader(fhosts)
+		for {
+			line, err := r.ReadString('\n')
+			if err != nil && err != io.EOF {
+				return errors.New("cannot read hosts file: " +
+					err.Error())
+			}
+			if err == io.EOF && len(line) == 0 {
+				break
+			}
+			// skip comments
+			if comm := strings.IndexByte(line, '#'); comm > -1 {
+				line = line[:comm]
+			}
+			if len(line) == 0 {
+				continue
+			}
+			if fields := strings.Fields(line); len(fields) > 1 {
+				for i := 1; i < len(fields); i++ {
+					if strings.EqualFold(fields[i], host) {
+						return nil
+					}
+				}
+			}
+			if err == io.EOF {
+				break
+			}
+		}
+		_, err = fhosts.WriteString("127.0.0.1\t" + host + "\n")
+		return err
+	}
+	return ErrNotFoundHostFile
 }
 
 func RemoveLocalHostIfExists(host string) error {
-	return nil
+	if host = strings.TrimSpace(host); len(host) == 0 {
+		panic("passed empty host")
+	}
+	if hostsPath := FileHostsPath(); len(hostsPath) > 0 {
+		fhosts, err := os.OpenFile(hostsPath, os.O_RDWR, os.ModePerm)
+		if err != nil {
+			return err
+		}
+		defer fhosts.Close()
+		buff := bytes.NewBuffer(nil)
+		rdr := bufio.NewReader(fhosts)
+		exp := regexp.MustCompile("(?i)" + regexp.QuoteMeta(host))
+		var line, comm string
+		for {
+			line, err = rdr.ReadString('\n')
+			if err != nil && err != io.EOF {
+				return err
+			}
+			if err == io.EOF && len(line) == 0 {
+				break
+			}
+			if i := strings.IndexByte(line, '#'); i > -1 {
+				line, comm = line[:i], line[i:]
+			}
+			if len(strings.TrimSpace(line)) == 0 {
+				buff.WriteString(line + comm)
+				continue
+			}
+			line = exp.ReplaceAllString(line, "")
+			if len(strings.Fields(line)) > 1 {
+				buff.WriteString(line + comm)
+			} else {
+				buff.WriteString(comm)
+			}
+			if err == io.EOF {
+				break
+			}
+		}
+		if _, err = fhosts.Seek(0, 0); err != nil {
+			return err
+		}
+		if n, err := buff.WriteTo(fhosts); err != nil {
+			return err
+		} else if err = fhosts.Truncate(n); err != nil {
+			return err
+		}
+		return nil
+	}
+	return ErrNotFoundHostFile
 }
 
 func InterfaceStart(server *Server, config *Config) error {
@@ -75,11 +177,12 @@ func InterfaceStart(server *Server, config *Config) error {
 		panic("interface error: passed nil config")
 	}
 
-	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                         INITIALIZATION                        *
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
 	var err error
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                        INITIALIZATION                       *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 	if _ALLOW_FREE_CONSOLE {
 		// free console
 		if err = FreeConsole(); err != nil {
@@ -89,7 +192,8 @@ func InterfaceStart(server *Server, config *Config) error {
 	if !server.IsRunning() {
 		if _ALLOW_REWRITE_HOSTS_FILE {
 			// edit hosts file
-			if err = CreateLocalHostIfNotExists(config.Host); err != nil {
+			err = CreateLocalHostIfNotExists(config.Host)
+			if err != nil {
 				log.Println("cannot create local addr:", err)
 			}
 		}
@@ -98,10 +202,25 @@ func InterfaceStart(server *Server, config *Config) error {
 			return err
 		}
 	}
+	defer func() {
+		if server.IsRunning() {
+			// shut down server
+			if err = server.ShutDown(); err != nil {
+				log.Println("cannot shut down server", err)
+			}
+		}
+		if _ALLOW_REWRITE_HOSTS_FILE {
+			// remove local host from hosts file
+			err = RemoveLocalHostIfExists(config.Host)
+			if err != nil {
+				log.Println("cannot remove local host:", err)
+			}
+		}
+	}()
 
-	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                       END INITIALIZATION                      *
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                      END INITIALIZATION                     *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 	mw, err := walk.NewMainWindow()
 	if err != nil {
@@ -306,23 +425,5 @@ func InterfaceStart(server *Server, config *Config) error {
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 	mw.Run()
-
-	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                           FINALIZE                            *
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-	if server.IsRunning() {
-		// shut down server
-		if err = server.ShutDown(); err != nil {
-			log.Println("cannot shut down server", err)
-		}
-	}
-	if _ALLOW_REWRITE_HOSTS_FILE {
-		// remove local host from hosts file
-		if err = RemoveLocalHostIfExists(config.Host); err != nil {
-			log.Println("cannot remove local host:", err)
-		}
-	}
-
 	return nil
 }
