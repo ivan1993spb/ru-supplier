@@ -13,7 +13,8 @@ type ErrInvalidPattern struct {
 }
 
 func (e *ErrInvalidPattern) Error() string {
-	return "Invalid pattern " + string(e.pattern) + ": " + e.err.Error()
+	return "Invalid pattern " + string(e.pattern) + ": " +
+		e.err.Error()
 }
 
 type ErrRecurringPattern Pattern
@@ -110,7 +111,8 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 	if _, ok := patterns["All"]; ok && len(patterns["All"]) > 0 {
 		filter.SetExpsAll(patterns["All"])
 	}
-	if _, ok := patterns["OrderName"]; ok && len(patterns["OrderName"]) > 0 {
+	if _, ok := patterns["OrderName"]; ok &&
+		len(patterns["OrderName"]) > 0 {
 		filter.SetExpsOrderName(patterns["OrderName"])
 	}
 	if _, ok := patterns["OKDP"]; ok && len(patterns["OKDP"]) > 0 {
@@ -119,7 +121,8 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 	if _, ok := patterns["OKPD"]; ok && len(patterns["OKPD"]) > 0 {
 		filter.SetExpsOKPD(patterns["OKPD"])
 	}
-	if _, ok := patterns["OrganisationName"]; ok && len(patterns["OrganisationName"]) > 0 {
+	if _, ok := patterns["OrganisationName"]; ok &&
+		len(patterns["OrganisationName"]) > 0 {
 		filter.SetExpsOrganisationName(patterns["OrganisationName"])
 	}
 	return filter, nil
@@ -219,16 +222,16 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 	return orders, (1 - float32(len(orders))/float32(count))
 }
 
-func (f *Filter) Save() error {
-	file, err := os.Create(f.fname)
-	if err != nil {
-		return err
-	}
-	return json.NewEncoder(file).Encode(map[string]PatternSet{
-		"All":              f.All.PatternSet(),
-		"OrderName":        f.OrderName.PatternSet(),
-		"OKDP":             f.OKDP.PatternSet(),
-		"OKPD":             f.OKPD.PatternSet(),
-		"OrganisationName": f.OrganisationName.PatternSet(),
-	})
-}
+// func (f *Filter) Save() error {
+// 	file, err := os.Create(f.fname)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return json.NewEncoder(file).Encode(map[string]PatternSet{
+// 		"All":              f.All.PatternSet(),
+// 		"OrderName":        f.OrderName.PatternSet(),
+// 		"OKDP":             f.OKDP.PatternSet(),
+// 		"OKPD":             f.OKPD.PatternSet(),
+// 		"OrganisationName": f.OrganisationName.PatternSet(),
+// 	})
+// }

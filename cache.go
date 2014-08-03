@@ -134,7 +134,8 @@ func (hs *HashStore) Save() error {
 	defer file.Close()
 	data := make(map[string]string)
 	for _, pair := range hs.data {
-		data[hex.EncodeToString(pair.url)] = hex.EncodeToString(pair.chunk)
+		data[hex.EncodeToString(pair.url)] =
+			hex.EncodeToString(pair.chunk)
 	}
 	return json.NewEncoder(file).Encode(data)
 }

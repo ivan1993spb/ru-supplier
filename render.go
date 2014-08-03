@@ -16,7 +16,7 @@ import "github.com/gorilla/feeds"
 
 const (
 	_DEFAULT_TITLE    = "Закупки"
-	_FEED_DESCRIPTION = "Удобная лента закупок с гибким механизмом фильтрации"
+	_FEED_DESCRIPTION = "Лента закупок с гибким механизмом фильтрации"
 	_FEED_LINK        = "http://zakupki.gov.ru"
 )
 
@@ -136,19 +136,19 @@ func MakeDescription(order *Order) string {
 func MakeLink(id string) string {
 	return fmt.Sprint("http://zakupki.gov.ru",
 		"/epz/order/quicksearch/update.html",
-		"?placeOfSearch=FZ_44&_placeOfSearch=on",  // ФЗ 44;
-		"&placeOfSearch=FZ_223&_placeOfSearch=on", // ФЗ 223;
-		"&placeOfSearch=FZ_94&_placeOfSearch=on",  // ФЗ 94;
-		"&priceFrom=0&priceTo=200+000+000+000",    // любая НМЦК;
+		"?placeOfSearch=FZ_44&_placeOfSearch=on",  // ФЗ 44
+		"&placeOfSearch=FZ_223&_placeOfSearch=on", // ФЗ 223
+		"&placeOfSearch=FZ_94&_placeOfSearch=on",  // ФЗ 94
+		"&priceFrom=0&priceTo=200+000+000+000",    // любая НМЦК
 		"&publishDateFrom=&publishDateTo=",        // выкл. диапозоны
-		"&updateDateFrom=&updateDateTo=",          // времени;
-		"&orderStages=AF&_orderStages=on",         // подача заявок;
-		"&orderStages=CA&_orderStages=on",         // работа комиссии;
-		"&orderStages=PC&_orderStages=on",         // завершена;
-		"&orderStages=PA&_orderStages=on",         // отменена;
+		"&updateDateFrom=&updateDateTo=",          // времени
+		"&orderStages=AF&_orderStages=on",         // подача заявок
+		"&orderStages=CA&_orderStages=on",         // работа комиссии
+		"&orderStages=PC&_orderStages=on",         // завершена
+		"&orderStages=PA&_orderStages=on",         // отменена
 		"&sortDirection=false&sortBy=UPDATE_DATE", // по убыванию даты публикации
 		"&recordsPerPage=_10&pageNo=1",            // без этого не работает
-		"&searchString=", id,                      // поиск по ид;
+		"&searchString=", id,                      // поиск по ид
 		"&strictEqual=false&morphology=false",
 		"&showLotsInfo=false&isPaging=false",
 		"&isHeaderClick=&checkIds=")
@@ -212,8 +212,11 @@ func (r *Render) Compose(title string, orders []*Order) {
 	r.feed.Items = make([]*feeds.RssItem, len(orders))
 	for i, order := range orders {
 		r.feed.Items[i] = &feeds.RssItem{
-			Title:       MakeTitle(order),
-			Link:        MakeShortLink(order.OrderId, r.config.HTTPHost()),
+			Title: MakeTitle(order),
+			Link: MakeShortLink(
+				order.OrderId,
+				r.config.HTTPHost(),
+			),
 			Description: MakeDescription(order),
 			Author:      order.OrganisationName,
 			PubDate:     order.PubDate.Format(time.RFC1123),

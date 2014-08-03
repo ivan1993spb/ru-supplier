@@ -88,10 +88,10 @@ func (c *Config) SetFilterEnabled(flag bool) {
 	c.FilterEnabled = flag
 }
 
-func (c *Config) SetHost(host string) {
-	c.Host = host
-}
+// func (c *Config) SetHost(host string) {
+// 	c.Host = host
+// }
 
-func (c *Config) SetPort(port string) {
-	c.Port = port
-}
+// func (c *Config) SetPort(port string) {
+// 	c.Port = port
+// }

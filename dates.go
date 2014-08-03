@@ -18,7 +18,9 @@ func ParseRusFormatDate(date string) (time.Time, error) {
 		if len(chunks) >= 3 {
 			if day, err := strconv.Atoi(chunks[0]); err == nil {
 				if month, err := strconv.Atoi(chunks[1]); err == nil {
-					if year, err := strconv.Atoi(chunks[2]); err == nil {
+					if year, err :=
+						strconv.Atoi(chunks[2]); err == nil {
+						// date was successfully parsed
 						return time.Date(year, time.Month(month), day,
 							0, 0, 0, 0, MoscowTimeZone), nil
 					}

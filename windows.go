@@ -25,6 +25,8 @@ const (
 	_ALLOW_REWRITE_HOSTS_FILE = false
 	// true to allow run server on application start
 	_RUN_SERVER_ON_STARTING = true
+	// time for which proxy must start
+	_START_SERVER_TIMEOUT = time.Second * 2
 )
 
 const (
@@ -59,6 +61,7 @@ const (
 	_NOTICE_DISABLED_FILTERS = "Фильтр выключен"
 	_NOTICE_PROXY_ENABLED    = "Локальный прокси запущен"
 	_NOTICE_PROXY_DISABLED   = "Локальный прокси остановлен"
+	_NOTICE_PLEAS_WAIT       = "Пожалуйста подождите"
 )
 
 func InterfaceStart(server *Server, config *Config) (err error) {
@@ -284,12 +287,12 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	startServerAction.Triggered().Attach(func() {
 		if !server.IsRunning() {
 			startServer()
-
-			// must be fixed
-			time.Sleep(time.Second * 2)
-
-			updateServerButtons()
-			ni.ShowMessage(_PROG_TITLE, _NOTICE_PROXY_ENABLED)
+			ni.ShowMessage(_PROG_TITLE, _NOTICE_PLEAS_WAIT)
+			time.Sleep(_START_SERVER_TIMEOUT)
+			if server.IsRunning() {
+				updateServerButtons()
+				ni.ShowMessage(_PROG_TITLE, _NOTICE_PROXY_ENABLED)
+			}
 		}
 	})
 

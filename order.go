@@ -111,33 +111,44 @@ func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
 	}
 	if len(row[_FIELD_EXHIBITION_NUMBER]) > 0 {
 		// Только для многолотовых закупок по ФЗ 223
-		order.ExhibitionNumber, err = strconv.Atoi(row[_FIELD_EXHIBITION_NUMBER])
+		order.ExhibitionNumber, err =
+			strconv.Atoi(row[_FIELD_EXHIBITION_NUMBER])
 		if err != nil {
-			order.PushError(errors.New("Invalid exhibition number: " + err.Error()))
+			order.PushError(errors.New("Invalid exhibition number: " +
+				err.Error()))
 		}
 	}
-	order.StartOrderPrice, err = ParsePrice(row[_FIELD_START_ORDER_PRICE])
+	order.StartOrderPrice, err =
+		ParsePrice(row[_FIELD_START_ORDER_PRICE])
 	if err != nil {
-		order.PushError(errors.New("Invalid order price: " + err.Error()))
+		order.PushError(errors.New("Invalid order price: " +
+			err.Error()))
 	}
 	if len(row[_FIELD_CURRENCY_ID]) == 0 {
 		order.PushError(errors.New("Unknown currency"))
 	}
 	order.PubDate, err = ParseRusFormatDate(row[_FIELD_PUB_DATE])
 	if err != nil {
-		order.PushError(errors.New("Unknown publish date: " + err.Error()))
+		order.PushError(errors.New("Unknown publish date: " +
+			err.Error()))
 	}
-	order.LastEventDate, err = ParseRusFormatDate(row[_FIELD_LAST_EVENT_DATE])
+	order.LastEventDate, err =
+		ParseRusFormatDate(row[_FIELD_LAST_EVENT_DATE])
 	if err != nil {
-		order.PushError(errors.New("Unknown last event date: " + err.Error()))
+		order.PushError(errors.New("Unknown last event date: " +
+			err.Error()))
 	}
-	order.StartFilingDate, err = ParseRusFormatDate(row[_FIELD_START_FILING_DATE])
+	order.StartFilingDate, err =
+		ParseRusFormatDate(row[_FIELD_START_FILING_DATE])
 	if err != nil {
-		order.PushError(errors.New("Unknown start filing date: " + err.Error()))
+		order.PushError(errors.New("Unknown start filing date: " +
+			err.Error()))
 	}
-	order.FinishFilingDate, err = ParseRusFormatDate(row[_FIELD_FINISH_FILING_DATE])
+	order.FinishFilingDate, err =
+		ParseRusFormatDate(row[_FIELD_FINISH_FILING_DATE])
 	if err != nil {
-		order.PushError(errors.New("Unknown finish filing date: " + err.Error()))
+		order.PushError(errors.New("Unknown finish filing date: " +
+			err.Error()))
 	}
 	return
 }
