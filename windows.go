@@ -1,3 +1,8 @@
+// +build windows
+
+// To get rid of the cmd window, instead run
+// go build -ldflags="-H windowsgui"
+
 package main
 
 import (
@@ -11,62 +16,363 @@ import (
 	"path"
 	"regexp"
 	"strings"
-	"syscall"
+	"time"
 )
 import "github.com/lxn/walk"
-
-const _PROGRAMM_ICON_FILE_NAME = "eagle.ico"
 
 const (
 	// require root privileges if true
 	_ALLOW_REWRITE_HOSTS_FILE = false
-	// false for debugging
-	_ALLOW_FREE_CONSOLE = false
+	// true to allow run server on application start
+	_RUN_SERVER_ON_STARTING = true
 )
 
 const (
-	// _PROG_TITLE               = "Внимательный Поставщик"
-	// _PROG_VERSION             = "2.0"
-	// _NOTIFY_ICON_TOOL_TIP_MSG = _PROG_TITLE + " " + _PROG_VERSION
-
-	_ACTION_TITLE_START_SERVER    = "Запустить"
-	_ACTION_TITLE_STOP_SERVER     = "Остановить"
-	_ACTION_TITLE_FILTER_ENABLED  = "Фильтровать"
-	_ACTION_TITLE_FILTER_DISABLED = "Не фильтровать"
-	_ACTION_TITLE_REMOVE_CACHE    = "Сбросить кэш"
-	_ACTION_TITLE_OPEN_DIR        = "Открыть папку"
-	// _ACTION_TITLE_OPEN_README  = "Открыть инструкцию"
-	_ACTION_TITLE_EXIT = "Выход"
-
-	_TOOL_TIP_MESSAGE_SERVER_RUNNING = "Работает"
-	_TOOL_TIP_MESSAGE_SERVER_STOPPED = "Остановлен"
+	_PROG_ICON_FILE_NAME        = "eagle.ico"
+	_PROG_DESCRIPTION_FILE_NAME = "README.md"
 )
 
-func FreeConsole() error {
-	kernel32, err := syscall.LoadLibrary("kernel32.dll")
+const (
+	_PROG_NAME    = "Внимательный Поставщик"
+	_PROG_VERSION = "2.0"
+	_PROG_TITLE   = _PROG_NAME + " " + _PROG_VERSION
+)
+
+const (
+	_ACTION_TITLE_START_SERVER    = "Запустить прокси"
+	_ACTION_TITLE_STOP_SERVER     = "Остановить прокси"
+	_ACTION_TITLE_FILTER_ENABLED  = "Включить фильтр"
+	_ACTION_TITLE_FILTER_DISABLED = "Выключить фильтр"
+	_ACTION_TITLE_REMOVE_CACHE    = "Сбросить кэш"
+	_ACTION_TITLE_OPEN_DIR        = "Папка настроек"
+	_ACTION_TITLE_OPEN_README     = "Инструкция"
+	_ACTION_TITLE_EXIT            = "Выход"
+)
+
+const (
+	_NOTICE_APP_START     = "Здравствуйте, программа запущена"
+	_NOTICE_CACHE_REMOVED = "Кэш удален, программа некоторое время " +
+		"будет загружать и обрабатывать все доступные закупки"
+	_NOTICE_CONFIGS = "Все настройки программы и фильтры храняться " +
+		"в файлах с расширением .json"
+	_NOTICE_ENABLED_FILTERS  = "Фильтр включен"
+	_NOTICE_DISABLED_FILTERS = "Фильтр выключен"
+	_NOTICE_PROXY_ENABLED    = "Локальный прокси запущен"
+	_NOTICE_PROXY_DISABLED   = "Локальный прокси остановлен"
+)
+
+func InterfaceStart(server *Server, config *Config) (err error) {
+	if server == nil {
+		panic("interface error: passed nil server")
+	}
+	if config == nil {
+		panic("interface error: passed nil config")
+	}
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                        INITIALIZATION                       *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+	if _ALLOW_REWRITE_HOSTS_FILE {
+		// edit hosts file
+		err = CreateLocalHostIfNotExists(config.Host)
+		if err != nil {
+			log.Println("cannot create local addr:", err)
+		}
+	}
+	defer func() {
+		if _ALLOW_REWRITE_HOSTS_FILE {
+			// remove local host from hosts file
+			err = RemoveLocalHostIfExists(config.Host)
+			if err != nil {
+				log.Println("cannot remove local host:", err)
+			}
+		}
+	}()
+	startServer := func() {
+		go func() {
+			if !server.IsRunning() {
+				// start server
+				if err := server.Start(); err != nil {
+					log.Println("cannot start server:", err)
+				}
+			}
+		}()
+	}
+	stopServer := func() {
+		if server.IsRunning() {
+			// shut down server
+			if err = server.ShutDown(); err != nil {
+				log.Println("cannot shut down server", err)
+			}
+		}
+	}
+	if _RUN_SERVER_ON_STARTING && !server.IsRunning() {
+		startServer()
+	}
+	defer stopServer()
+	defer func() {
+		if err = config.Save(); err != nil {
+			log.Println("cannot save configures:", err)
+		}
+	}()
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                      END INITIALIZATION                     *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+	mw, err := walk.NewMainWindow()
 	if err != nil {
-		return err
+		return
 	}
-	freeConsole, err := syscall.GetProcAddress(
-		kernel32,
-		"FreeConsole",
-	)
+	defer mw.Dispose()
+	ni, err := walk.NewNotifyIcon()
 	if err != nil {
-		return err
+		return
 	}
-	_, _, errnum := syscall.Syscall(uintptr(freeConsole), 0, 0, 0, 0)
-	if errnum != 0 {
-		return errors.New("syscall return error code")
+	defer ni.Dispose()
+	if err = ni.SetVisible(true); err != nil {
+		return
 	}
-	return nil
+	if err = ni.SetToolTip(_PROG_TITLE); err != nil {
+		return
+	}
+	ni.ShowMessage(_PROG_TITLE, _NOTICE_APP_START)
+	// create image icon
+	if icon, err :=
+		walk.NewIconFromFile(_PROG_ICON_FILE_NAME); err != nil {
+		log.Println("cannot load icon from file:", err)
+	} else {
+		defer icon.Dispose()
+		if err = ni.SetIcon(icon); err != nil {
+			log.Println("cannot bind img with notify icon:", err)
+		}
+	}
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                            ACTIONS                          *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+	startServerAction := walk.NewAction()
+	err = startServerAction.SetText(_ACTION_TITLE_START_SERVER)
+	if err != nil {
+		return
+	}
+	err = startServerAction.SetVisible(!server.IsRunning())
+	if err != nil {
+		return
+	}
+	err = ni.ContextMenu().Actions().Add(startServerAction)
+	if err != nil {
+		return
+	}
+
+	stopServerAction := walk.NewAction()
+	err = stopServerAction.SetText(_ACTION_TITLE_STOP_SERVER)
+	if err != nil {
+		return
+	}
+	err = stopServerAction.SetVisible(server.IsRunning())
+	if err != nil {
+		return
+	}
+	err = ni.ContextMenu().Actions().Add(stopServerAction)
+	if err != nil {
+		return
+	}
+
+	filterEnableAction := walk.NewAction()
+	err = filterEnableAction.SetText(_ACTION_TITLE_FILTER_ENABLED)
+	if err != nil {
+		return
+	}
+	err = filterEnableAction.SetVisible(!config.FilterEnabled)
+	if err != nil {
+		return
+	}
+	err = ni.ContextMenu().Actions().Add(filterEnableAction)
+	if err != nil {
+		return
+	}
+
+	filterDisabledAction := walk.NewAction()
+	err = filterDisabledAction.SetText(_ACTION_TITLE_FILTER_DISABLED)
+	if err != nil {
+		return
+	}
+	err = filterDisabledAction.SetVisible(config.FilterEnabled)
+	if err != nil {
+		return
+	}
+	err = ni.ContextMenu().Actions().Add(filterDisabledAction)
+	if err != nil {
+		return
+	}
+
+	removeCacheAction := walk.NewAction()
+	err = removeCacheAction.SetText(_ACTION_TITLE_REMOVE_CACHE)
+	if err != nil {
+		return
+	}
+	err = ni.ContextMenu().Actions().Add(removeCacheAction)
+	if err != nil {
+		return
+	}
+
+	err = ni.ContextMenu().Actions().Add(walk.NewSeparatorAction())
+	if err != nil {
+		return
+	}
+
+	openDirAction := walk.NewAction()
+	err = openDirAction.SetText(_ACTION_TITLE_OPEN_DIR)
+	if err != nil {
+		return
+	}
+	err = ni.ContextMenu().Actions().Add(openDirAction)
+	if err != nil {
+		return
+	}
+
+	openReadMeAction := walk.NewAction()
+	err = openReadMeAction.SetText(_ACTION_TITLE_OPEN_README)
+	if err != nil {
+		return
+	}
+	err = ni.ContextMenu().Actions().Add(openReadMeAction)
+	if err != nil {
+		return
+	}
+
+	err = ni.ContextMenu().Actions().Add(walk.NewSeparatorAction())
+	if err != nil {
+		return
+	}
+
+	exitAction := walk.NewAction()
+	err = exitAction.SetText(_ACTION_TITLE_EXIT)
+	if err != nil {
+		return
+	}
+	err = ni.ContextMenu().Actions().Add(exitAction)
+	if err != nil {
+		return
+	}
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                        EVENT HANDLERS                       *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+	updateServerButtons := func() {
+		if server.IsRunning() {
+			if err = startServerAction.SetVisible(false); err != nil {
+				log.Println(err)
+			}
+			if err = stopServerAction.SetVisible(true); err != nil {
+				log.Println(err)
+			}
+		} else {
+			if err = stopServerAction.SetVisible(false); err != nil {
+				log.Println(err)
+			}
+			if err = startServerAction.SetVisible(true); err != nil {
+				log.Println(err)
+			}
+		}
+	}
+
+	startServerAction.Triggered().Attach(func() {
+		if !server.IsRunning() {
+			startServer()
+
+			// must be fixed
+			time.Sleep(time.Second * 2)
+
+			updateServerButtons()
+			ni.ShowMessage(_PROG_TITLE, _NOTICE_PROXY_ENABLED)
+		}
+	})
+
+	stopServerAction.Triggered().Attach(func() {
+		if server.IsRunning() {
+			stopServer()
+			updateServerButtons()
+			ni.ShowMessage(_PROG_TITLE, _NOTICE_PROXY_DISABLED)
+		}
+	})
+
+	updateFilterButtons := func() {
+		if config.FilterEnabled {
+			err = filterEnableAction.SetVisible(false)
+			if err != nil {
+				log.Println(err)
+			}
+			err = filterDisabledAction.SetVisible(true)
+			if err != nil {
+				log.Println(err)
+			}
+		} else {
+			err = filterDisabledAction.SetVisible(false)
+			if err != nil {
+				log.Println(err)
+			}
+			err = filterEnableAction.SetVisible(true)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+
+	filterEnableAction.Triggered().Attach(func() {
+		config.SetFilterEnabled(true)
+		updateFilterButtons()
+		ni.ShowInfo(_PROG_TITLE, _NOTICE_ENABLED_FILTERS)
+	})
+
+	filterDisabledAction.Triggered().Attach(func() {
+		config.SetFilterEnabled(false)
+		updateFilterButtons()
+		ni.ShowInfo(_PROG_TITLE, _NOTICE_DISABLED_FILTERS)
+	})
+
+	removeCacheAction.Triggered().Attach(func() {
+		if err = server.RemoveCache(); err != nil {
+			log.Println("cannot remove cache:", err)
+		}
+		ni.ShowInfo(_PROG_TITLE, _NOTICE_CACHE_REMOVED)
+	})
+
+	openDirAction.Triggered().Attach(func() {
+		err = exec.Command("cmd", "/C", "start", ".").Start()
+		if err != nil {
+			log.Println("cannot open program directory:", err)
+		}
+		ni.ShowWarning(_PROG_TITLE, _NOTICE_CONFIGS)
+	})
+
+	openReadMeAction.Triggered().Attach(func() {
+		err = exec.Command(
+			"notepad",
+			_PROG_DESCRIPTION_FILE_NAME,
+		).Start()
+		if err != nil {
+			log.Println("cannot open README:", err)
+		}
+	})
+
+	exitAction.Triggered().Attach(func() {
+		walk.App().Exit(0)
+	})
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 *                       END EVENT HANDLERS                    *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+	mw.Run()
+	return
 }
 
-func FileHostsPath() string {
-	if root := os.Getenv("SystemRoot"); len(root) > 0 {
-		return path.Join(root, "system32", "drivers", "etc", "hosts")
-	}
-	return ""
-}
+var ErrNotFoundHostFile = errors.New("cannot find hosts file")
 
 func CreateLocalHostIfNotExists(host string) error {
 	if host = strings.TrimSpace(host); len(host) == 0 {
@@ -115,6 +421,13 @@ func CreateLocalHostIfNotExists(host string) error {
 		return err
 	}
 	return ErrNotFoundHostFile
+}
+
+func FileHostsPath() string {
+	if root := os.Getenv("SystemRoot"); len(root) > 0 {
+		return path.Join(root, "system32", "drivers", "etc", "hosts")
+	}
+	return ""
 }
 
 func RemoveLocalHostIfExists(host string) error {
@@ -167,263 +480,4 @@ func RemoveLocalHostIfExists(host string) error {
 		return nil
 	}
 	return ErrNotFoundHostFile
-}
-
-func InterfaceStart(server *Server, config *Config) error {
-	if server == nil {
-		panic("interface error: passed nil server")
-	}
-	if config == nil {
-		panic("interface error: passed nil config")
-	}
-
-	var err error
-
-	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                        INITIALIZATION                       *
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-	if _ALLOW_FREE_CONSOLE {
-		// free console
-		if err = FreeConsole(); err != nil {
-			log.Println("cannot free console:", err)
-		}
-	}
-	if !server.IsRunning() {
-		if _ALLOW_REWRITE_HOSTS_FILE {
-			// edit hosts file
-			err = CreateLocalHostIfNotExists(config.Host)
-			if err != nil {
-				log.Println("cannot create local addr:", err)
-			}
-		}
-		// start server
-		if err = server.Start(); err != nil {
-			return err
-		}
-	}
-	defer func() {
-		if server.IsRunning() {
-			// shut down server
-			if err = server.ShutDown(); err != nil {
-				log.Println("cannot shut down server", err)
-			}
-		}
-		if _ALLOW_REWRITE_HOSTS_FILE {
-			// remove local host from hosts file
-			err = RemoveLocalHostIfExists(config.Host)
-			if err != nil {
-				log.Println("cannot remove local host:", err)
-			}
-		}
-	}()
-
-	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                      END INITIALIZATION                     *
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-	mw, err := walk.NewMainWindow()
-	if err != nil {
-		return err
-	}
-	ni, err := walk.NewNotifyIcon()
-	if err != nil {
-		return err
-	}
-	defer ni.Dispose()
-	if err := ni.SetVisible(true); err != nil {
-		return err
-	}
-	// create image icon
-	if icon, err := walk.NewIconFromFile(_PROGRAMM_ICON_FILE_NAME); err != nil {
-		log.Println("cannot load icon from file:", err)
-	} else {
-		defer icon.Dispose()
-		if err = ni.SetIcon(icon); err != nil {
-			log.Println("cannot bind image icon with notify icon:", err)
-		}
-	}
-
-	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                            ACTIONS                            *
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-	startServerAction := walk.NewAction()
-	if err = startServerAction.SetText(_ACTION_TITLE_START_SERVER); err != nil {
-		return err
-	}
-	if err = ni.ContextMenu().Actions().Add(startServerAction); err != nil {
-		return err
-	}
-
-	stopServerAction := walk.NewAction()
-	if err = stopServerAction.SetText(_ACTION_TITLE_STOP_SERVER); err != nil {
-		return err
-	}
-	if err = ni.ContextMenu().Actions().Add(stopServerAction); err != nil {
-		return err
-	}
-
-	// // // // // // // // // // // // // // // // // // // //
-	// // // // // // // // // // // // // // // // // // // //
-	// // // // // // // // // // // // // // // // // // // //
-	// hide start button if server is running else hide stop button
-	updateServerButtons := func() {
-		if server.IsRunning() {
-			if err = ni.SetToolTip(_TOOL_TIP_MESSAGE_SERVER_RUNNING); err != nil {
-				log.Println(err)
-			}
-			if err = startServerAction.SetVisible(false); err != nil {
-				log.Println(err)
-			}
-			if err = stopServerAction.SetVisible(true); err != nil {
-				log.Println(err)
-			}
-		} else {
-			if err = ni.SetToolTip(_TOOL_TIP_MESSAGE_SERVER_STOPPED); err != nil {
-				log.Println(err)
-			}
-			if err = stopServerAction.SetVisible(false); err != nil {
-				log.Println(err)
-			}
-			if err = startServerAction.SetVisible(true); err != nil {
-				log.Println(err)
-			}
-		}
-	}
-	updateServerButtons()
-	// // // // // // // // // // // // // // // // // // // //
-	// // // // // // // // // // // // // // // // // // // //
-	// // // // // // // // // // // // // // // // // // // //
-
-	filterEnableAction := walk.NewAction()
-	if err = filterEnableAction.SetText(_ACTION_TITLE_FILTER_ENABLED); err != nil {
-		return err
-	}
-	if err = ni.ContextMenu().Actions().Add(filterEnableAction); err != nil {
-		return err
-	}
-
-	filterDisabledAction := walk.NewAction()
-	if err = filterDisabledAction.SetText(_ACTION_TITLE_FILTER_ENABLED); err != nil {
-		return err
-	}
-	if err = ni.ContextMenu().Actions().Add(filterDisabledAction); err != nil {
-		return err
-	}
-
-	// // // // // // // // // // // // // // // // // // // //
-	// // // // // // // // // // // // // // // // // // // //
-	// // // // // // // // // // // // // // // // // // // //
-	updateFilterButtons := func() {
-		if config.FilterEnabled {
-			if err = filterEnableAction.SetVisible(false); err != nil {
-				log.Println(err)
-			}
-			if err = filterDisabledAction.SetVisible(true); err != nil {
-				log.Println(err)
-			}
-		} else {
-			if err = filterDisabledAction.SetVisible(false); err != nil {
-				log.Println(err)
-			}
-			if err = filterEnableAction.SetVisible(true); err != nil {
-				log.Println(err)
-			}
-		}
-	}
-	updateFilterButtons()
-	// // // // // // // // // // // // // // // // // // // //
-	// // // // // // // // // // // // // // // // // // // //
-	// // // // // // // // // // // // // // // // // // // //
-
-	removeCacheAction := walk.NewAction()
-	if err = removeCacheAction.SetText(_ACTION_TITLE_REMOVE_CACHE); err != nil {
-		return err
-	}
-	if err = ni.ContextMenu().Actions().Add(removeCacheAction); err != nil {
-		return err
-	}
-
-	ni.ContextMenu().Actions().Add(walk.NewSeparatorAction())
-
-	openDirAction := walk.NewAction()
-	if err = openDirAction.SetText(_ACTION_TITLE_OPEN_DIR); err != nil {
-		return err
-	}
-	if err = ni.ContextMenu().Actions().Add(openDirAction); err != nil {
-		return err
-	}
-
-	ni.ContextMenu().Actions().Add(walk.NewSeparatorAction())
-
-	exitAction := walk.NewAction()
-	if err = exitAction.SetText(_ACTION_TITLE_EXIT); err != nil {
-		return err
-	}
-	if err = ni.ContextMenu().Actions().Add(exitAction); err != nil {
-		return err
-	}
-
-	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                        EVENT HANDLERS                         *
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	startServer := func() {
-		if !server.IsRunning() {
-			if err = server.Start(); err != nil {
-				log.Println("cannot start server:", err)
-			}
-		}
-	}
-	stopServer := func() {
-		if server.IsRunning() {
-			if err = server.ShutDown(); err != nil {
-				log.Println("cannot shut down server:", err)
-			}
-		}
-	}
-	startServerAction.Triggered().Attach(startServer)
-	startServerAction.Triggered().Attach(updateServerButtons)
-
-	stopServerAction.Triggered().Attach(stopServer)
-	stopServerAction.Triggered().Attach(updateServerButtons)
-
-	filterEnableAction.Triggered().Attach(func() {
-		config.SetFilterEnabled(true)
-		config.Save()
-	})
-	filterEnableAction.Triggered().Attach(updateFilterButtons)
-
-	filterDisabledAction.Triggered().Attach(func() {
-		config.SetFilterEnabled(false)
-		config.Save()
-	})
-	filterDisabledAction.Triggered().Attach(updateFilterButtons)
-
-	removeCacheAction.Triggered().Attach(func() {
-		if err = server.RemoveCache(); err != nil {
-			log.Println("cannot remove cache:", err)
-		}
-	})
-
-	openDirAction.Triggered().Attach(func() {
-		if err = exec.Command("cmd", "/C", "start", ".").Start(); err != nil {
-			log.Println("cannot open program directory:", err)
-		}
-	})
-
-	exitAction.Triggered().Attach(func() {
-		stopServer()
-		if err = config.Save(); err != nil {
-			log.Println("cannot save configures:", err)
-		}
-		walk.App().Exit(0)
-	})
-
-	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 *                       END EVENT HANDLERS                      *
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-	mw.Run()
-	return nil
 }
