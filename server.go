@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"log"
 	"net"
@@ -46,6 +47,9 @@ func NewServer(config *Config, filter *Filter) (s *Server) {
 }
 
 func (s *Server) Start() (err error) {
+	if s.lis != nil {
+		return errors.New("server is already running")
+	}
 	s.lis, err = net.Listen("tcp", s.config.Host+":"+s.config.Port)
 	if err != nil {
 		log.Fatal("server:", err)
@@ -54,6 +58,9 @@ func (s *Server) Start() (err error) {
 }
 
 func (s *Server) ShutDown() error {
+	if s.lis == nil {
+		return errors.New("server is already stopped")
+	}
 	s.Wait() // wait for all processed requests
 	if s.lis == nil {
 		return nil
