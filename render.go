@@ -228,6 +228,7 @@ func (r *Render) WriteTo(w io.Writer) error {
 	if _, err := io.WriteString(w, xml.Header); err != nil {
 		return err
 	}
+	// clear feed
 	defer func() {
 		r.feed.Title = _DEFAULT_TITLE
 		r.feed.Items = nil

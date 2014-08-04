@@ -37,8 +37,7 @@ func LoadConfig(fname string) (conf *Config, err error) {
 		}
 	} else {
 		defer file.Close()
-		dec := json.NewDecoder(file)
-		if err = dec.Decode(&conf); err == nil {
+		if err = json.NewDecoder(file).Decode(&conf); err == nil {
 			if !conf.Valid() {
 				*conf = *defaultConfig
 				err = ErrInvalidConfig
@@ -62,8 +61,7 @@ func (c *Config) Save() error {
 		return err
 	}
 	defer file.Close()
-	enc := json.NewEncoder(file)
-	return enc.Encode(c)
+	return json.NewEncoder(file).Encode(c)
 }
 
 func (c *Config) LikeDefault() bool {

@@ -26,7 +26,7 @@ const (
 	// true to allow run server on application start
 	_RUN_SERVER_ON_STARTING = true
 	// time for which proxy must start
-	_START_SERVER_TIMEOUT = time.Second * 3
+	_START_SERVER_TIMEOUT = time.Second * 2
 )
 
 const (
@@ -77,29 +77,27 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 
 	if _ALLOW_REWRITE_HOSTS_FILE {
 		// edit hosts file
-		err = CreateLocalHostIfNotExists(config.Host)
-		if err != nil {
+		if err = CreateLocalHostIfNotExists(config.Host); err != nil {
 			log.Println("cannot create local addr:", err)
 		}
-	}
-	defer func() {
-		if _ALLOW_REWRITE_HOSTS_FILE {
+		defer func() {
 			// remove local host from hosts file
 			err = RemoveLocalHostIfExists(config.Host)
 			if err != nil {
 				log.Println("cannot remove local host:", err)
 			}
-		}
-	}()
+		}()
+	}
 	startServer := func() {
-		go func() {
-			if !server.IsRunning() {
+		if !server.IsRunning() {
+			go func() {
 				// start server
 				if err := server.Start(); err != nil {
 					log.Println("cannot start server:", err)
 				}
-			}
-		}()
+			}()
+			time.Sleep(_START_SERVER_TIMEOUT)
+		}
 	}
 	stopServer := func() {
 		if server.IsRunning() {
@@ -285,13 +283,16 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 
 	startServerAction.Triggered().Attach(func() {
 		if !server.IsRunning() {
-			startServerAction.SetEnabled(false)
+			if err = startServerAction.SetEnabled(false); err != nil {
+				log.Println(err)
+			}
 			startServer()
-			time.Sleep(_START_SERVER_TIMEOUT)
 			if server.IsRunning() {
 				ni.ShowMessage(_PROG_TITLE, _NOTICE_PROXY_ENABLED)
 			}
-			startServerAction.SetEnabled(true)
+			if err = startServerAction.SetEnabled(true); err != nil {
+				log.Println(err)
+			}
 		}
 		updateServerButtons()
 	})
@@ -327,30 +328,36 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	}
 
 	filterEnableAction.Triggered().Attach(func() {
-		config.SetFilterEnabled(true)
+		if !config.FilterEnabled {
+			config.SetFilterEnabled(true)
+			ni.ShowInfo(_PROG_TITLE, _NOTICE_ENABLED_FILTERS)
+		}
 		updateFilterButtons()
-		ni.ShowInfo(_PROG_TITLE, _NOTICE_ENABLED_FILTERS)
 	})
 
 	filterDisabledAction.Triggered().Attach(func() {
-		config.SetFilterEnabled(false)
+		if config.FilterEnabled {
+			config.SetFilterEnabled(false)
+			ni.ShowInfo(_PROG_TITLE, _NOTICE_DISABLED_FILTERS)
+		}
 		updateFilterButtons()
-		ni.ShowInfo(_PROG_TITLE, _NOTICE_DISABLED_FILTERS)
 	})
 
 	removeCacheAction.Triggered().Attach(func() {
 		if err = server.RemoveCache(); err != nil {
 			log.Println("cannot remove cache:", err)
+		} else {
+			ni.ShowInfo(_PROG_TITLE, _NOTICE_CACHE_REMOVED)
 		}
-		ni.ShowInfo(_PROG_TITLE, _NOTICE_CACHE_REMOVED)
 	})
 
 	openDirAction.Triggered().Attach(func() {
 		err = exec.Command("cmd", "/C", "start", ".").Start()
 		if err != nil {
 			log.Println("cannot open program directory:", err)
+		} else {
+			ni.ShowInfo(_PROG_TITLE, _NOTICE_CONFIGS)
 		}
-		ni.ShowWarning(_PROG_TITLE, _NOTICE_CONFIGS)
 	})
 
 	openReadMeAction.Triggered().Attach(func() {

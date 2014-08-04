@@ -18,7 +18,7 @@ import (
 
 const (
 	_STREAM_CHARSET = "windows-1251"
-	_BUFFER_SIZE    = 1024
+	_BUFFER_SIZE    = 1536
 )
 
 type ErrResponseStatus int
@@ -121,5 +121,5 @@ func (p *Parser) Parse(resp *http.Response) ([]*Order, error) {
 }
 
 func (p *Parser) RemoveCache() error {
-	return p.Remove()
+	return p.HashStore.Remove()
 }

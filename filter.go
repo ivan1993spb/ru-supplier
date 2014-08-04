@@ -59,7 +59,10 @@ func (ps PatternSet) Verify() (int, error) {
 }
 
 func (ps PatternSet) Compile() (ExpSet, error) {
-	es := make([]*regexp.Regexp, len(ps))
+	if len(ps) == nil {
+		return nil, nil
+	}
+	es := make(ExpSet, len(ps))
 	for i, pattern := range ps {
 		if exp, err := pattern.Compile(); err == nil {
 			es[i] = exp
@@ -89,9 +92,9 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 	if len(fname) == 0 {
 		panic("filter: invalid file name")
 	}
+	filter = &Filter{fname: fname}
 	var file *os.File
 	file, err = os.Open(fname)
-	filter = &Filter{fname: fname}
 	if err != nil {
 		if os.IsNotExist(err) {
 			err = nil
@@ -99,10 +102,8 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 		return
 	}
 	defer file.Close()
-	dec := json.NewDecoder(file)
-	patterns := make(map[string]PatternSet)
-	err = dec.Decode(&patterns)
-	if err != nil {
+	var patterns map[string]PatternSet
+	if err = json.NewDecoder(file).Decode(&patterns); err != nil {
 		if err == io.EOF {
 			err = nil
 		}

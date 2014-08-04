@@ -18,16 +18,15 @@ func main() {
 		os.ModePerm,
 	); err != nil {
 		log.Fatal(err)
-	} else {
-		log.SetFlags(log.LstdFlags)
-		log.SetOutput(logfile)
 	}
+	log.SetFlags(log.LstdFlags)
+	log.SetOutput(logfile)
 	config, err := LoadConfig(_CONFIG_FILE_NAME)
 	if config == nil {
 		if err != nil {
 			log.Fatal("cannot load configs:", err)
 		} else {
-			panic("config is nil")
+			panic("config object is nil")
 		}
 	}
 	if err != nil {
@@ -38,14 +37,16 @@ func main() {
 		if err != nil {
 			log.Fatal("cannot load filters:", err)
 		} else {
-			panic("filter is nil")
+			panic("filter object is nil")
 		}
 	}
 	if err != nil {
 		log.Println("filter:", err)
 	}
-	server := NewServer(config, filter)
-	if err = InterfaceStart(server, config); err != nil {
+	if err = InterfaceStart(
+		NewServer(config, filter),
+		config,
+	); err != nil {
 		log.Fatal("interface fatal error:", err)
 	}
 }

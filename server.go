@@ -113,13 +113,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) ShortLinkHandler(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	if err := r.ParseForm(); err != nil {
-		log.Println("bad request:", err)
-		w.WriteHeader(http.StatusOK)
-	} else {
-		// redirect if order id was not passed also
-		http.Redirect(w, r, MakeLink(r.Form.Get("order")),
-			http.StatusFound)
-	}
+	// redirect if order id was not passed also
+	http.Redirect(w, r, MakeLink(r.FormValue("order")), http.StatusFound)
+	r.Body.Close()
 }

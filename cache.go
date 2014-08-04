@@ -76,7 +76,7 @@ func LoadHashStoreSimple() *HashStore {
 		if err != nil {
 			log.Fatal("cannot load hashstore:", err)
 		} else {
-			panic("hashstore is nil")
+			panic("hashstore object is nil")
 		}
 	}
 	if err != nil {
@@ -89,8 +89,8 @@ func LoadHashStore(fname string) (hs *HashStore, err error) {
 	if len(fname) == 0 {
 		panic("hashstore: invalid file name")
 	}
-	var file *os.File
 	hs = &HashStore{fname, nil}
+	var file *os.File
 	file, err = os.Open(fname)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -99,9 +99,8 @@ func LoadHashStore(fname string) (hs *HashStore, err error) {
 		return
 	}
 	defer file.Close()
-	dec := json.NewDecoder(file)
 	var data map[string]string
-	if err = dec.Decode(&data); err != nil {
+	if err = json.NewDecoder(file).Decode(&data); err != nil {
 		if err == io.EOF {
 			err = nil
 		}
