@@ -22,7 +22,7 @@ import "github.com/lxn/walk"
 
 const (
 	// require root privileges if true
-	_ALLOW_REWRITE_HOSTS_FILE = false
+	_ALLOW_REWRITE_HOSTS_FILE = true
 	// true to allow run server on application start
 	_RUN_SERVER_ON_STARTING = true
 	// time for which proxy must start
@@ -427,7 +427,7 @@ func CreateLocalHostIfNotExists(host string) error {
 				break
 			}
 		}
-		_, err = fhosts.WriteString("127.0.0.1\t" + host + "\n")
+		_, err = fhosts.WriteString("\r\n127.0.0.1\t" + host + "\r\n")
 		return err
 	}
 	return ErrNotFoundHostFile

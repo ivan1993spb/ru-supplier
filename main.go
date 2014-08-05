@@ -18,9 +18,10 @@ func main() {
 		os.ModePerm,
 	); err != nil {
 		log.Fatal(err)
+	} else {
+		log.SetFlags(log.LstdFlags)
+		log.SetOutput(logfile)
 	}
-	log.SetFlags(log.LstdFlags)
-	log.SetOutput(logfile)
 	config, err := LoadConfig(_CONFIG_FILE_NAME)
 	if config == nil {
 		if err != nil {

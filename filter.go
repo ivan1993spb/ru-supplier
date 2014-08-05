@@ -59,7 +59,7 @@ func (ps PatternSet) Verify() (int, error) {
 }
 
 func (ps PatternSet) Compile() (ExpSet, error) {
-	if len(ps) == nil {
+	if len(ps) == 0 {
 		return nil, nil
 	}
 	es := make(ExpSet, len(ps))
@@ -75,13 +75,13 @@ func (ps PatternSet) Compile() (ExpSet, error) {
 
 type ExpSet []*regexp.Regexp
 
-func (es ExpSet) PatternSet() PatternSet {
-	ps := make(PatternSet, len(es))
-	for i, exp := range es {
-		ps[i] = Pattern(exp.String())
-	}
-	return ps
-}
+// func (es ExpSet) PatternSet() PatternSet {
+// 	ps := make(PatternSet, len(es))
+// 	for i, exp := range es {
+// 		ps[i] = Pattern(exp.String())
+// 	}
+// 	return ps
+// }
 
 type Filter struct {
 	All, OrderName, OKDP, OKPD, OrganisationName ExpSet
