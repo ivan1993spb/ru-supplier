@@ -75,7 +75,9 @@ func Load(rawurl string) (*http.Response, error) {
 	if !URL.IsAbs() {
 		return nil, errors.New("passed url isn't absolute")
 	}
-	if sortBy := URL.Query().Get("sortBy"); sortBy != "PUBLISH_DATE" {
+	// param sortBy says what type of sorting we need to get
+	// this app are useful if orders sorted by publish date!
+	if URL.Query().Get("sortBy") != "PUBLISH_DATE" {
 		log.Println("result will not sorted by publish date!")
 	}
 	return http.DefaultClient.Do(&http.Request{
