@@ -146,7 +146,7 @@ func MakeLink(id string) string {
 		"&orderStages=CA&_orderStages=on",         // работа комиссии
 		"&orderStages=PC&_orderStages=on",         // завершена
 		"&orderStages=PA&_orderStages=on",         // отменена
-		"&sortDirection=false&sortBy=UPDATE_DATE", // по убыванию даты публикации
+		"&sortDirection=false&sortBy=UPDATE_DATE", // по убыванию даты обновления
 		"&recordsPerPage=_10&pageNo=1",            // без этого не работает
 		"&searchString=", id,                      // поиск по ид
 		"&strictEqual=false&morphology=false",
