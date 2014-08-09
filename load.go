@@ -9,6 +9,14 @@ import (
 	"time"
 )
 
+const (
+	_URL_REQUIRED_SCHEME            = "http"
+	_URL_REQUIRED_HOST              = "zakupki.gov.ru"
+	_URL_REQUIRED_PATH              = "/epz/order/orderCsvSettings/quickSearch/download.html"
+	_URL_REQUIRED_SORTING_TYPE      = "PUBLISH_DATE"
+	_URL_REQUIRED_SORTING_DIRECTION = "false"
+)
+
 var RandGen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 var UserAgents = []string{
@@ -72,14 +80,30 @@ func Load(rawurl string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if !URL.IsAbs() {
 		return nil, errors.New("passed url isn't absolute")
 	}
-	// param sortBy says what type of sorting we need to get
-	// this app are useful if orders sorted by publish date!
-	if URL.Query().Get("sortBy") != "PUBLISH_DATE" {
+	if URL.Scheme != _URL_REQUIRED_SCHEME {
+		return nil, errors.New("invalid url scheme")
+	}
+	if URL.Host != _URL_REQUIRED_HOST {
+		return nil, errors.New("invalid url host")
+	}
+	if URL.Path != _URL_REQUIRED_PATH {
+		return nil, errors.New("invalid url path")
+	}
+	// param sortBy defines type of sorting
+	if URL.Query().Get("sortBy") != _URL_REQUIRED_SORTING_TYPE {
 		log.Println("result will not sorted by publish date!")
 	}
+	// param sortDirection defines sorting direction
+	// this app is useful if and only if orders will sorted descending
+	// by publish date!
+	if URL.Query().Get("sortDirection") != _URL_REQUIRED_SORTING_DIRECTION {
+		log.Println("invalid sorting direction!")
+	}
+
 	return http.DefaultClient.Do(&http.Request{
 		URL:   URL,
 		Proto: "HTTP/1.1",

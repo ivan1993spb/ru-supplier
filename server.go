@@ -18,7 +18,7 @@ const (
 type Server struct {
 	*http.ServeMux
 	*sync.WaitGroup
-	parser *Parser
+	reader *OrderReader
 	filter *Filter
 	config *Config
 	render *Render
@@ -35,7 +35,7 @@ func NewServer(config *Config, filter *Filter) (s *Server) {
 	s = &Server{
 		http.NewServeMux(),
 		&sync.WaitGroup{},
-		NewParser(),
+		NewOrderReader(),
 		filter,
 		config,
 		NewRender(config),
@@ -70,7 +70,7 @@ func (s *Server) ShutDown() error {
 }
 
 func (s *Server) RemoveCache() error {
-	return s.parser.RemoveCache()
+	return s.reader.RemoveCache()
 }
 
 func (s *Server) IsRunning() bool {
@@ -85,7 +85,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("loading error:", err)
 	} else {
 		defer resp.Body.Close()
-		orders, err = s.parser.Parse(resp)
+		orders, err = s.reader.ReadOrders(resp)
 		if err != nil && err != io.EOF {
 			log.Println("can't read or parse response: ", err)
 		}

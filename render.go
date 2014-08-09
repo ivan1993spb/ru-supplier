@@ -11,8 +11,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/feeds"
 )
-import "github.com/gorilla/feeds"
 
 const (
 	_DEFAULT_TITLE    = "Закупки"

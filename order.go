@@ -91,6 +91,10 @@ type Order struct {
 	Errors           []error   // Ошибки при анализе закупки
 }
 
+func ParseOrder(rowData []byte) (*Order, error) {
+	return &Order, nil
+}
+
 func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
 	order = &Order{
 		OrderId:          strings.TrimLeft(row[_FIELD_ORDER_ID], "№"),

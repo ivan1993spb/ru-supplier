@@ -12,8 +12,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/lxn/walk"
 )
-import "github.com/lxn/walk"
 
 const (
 	// require root privileges if true

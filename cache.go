@@ -15,17 +15,20 @@ const _HASH_STORE_FILE_NAME = "cache.json"
 // CacheReader reads while does not find chunk which md5 hash sum
 // will matches with passed checking hash
 type CacheReader struct {
-	r       io.Reader
-	delim   []byte // chunk delimiter
-	ch_hash []byte // checking hex hash
-	chunk   []byte // current chunk
+	r      io.Reader
+	delim  []byte // chunk delimiter
+	chHash []byte // checking hex hash
+	chunk  []byte // current chunk
 }
 
 // NewCacheReader creates new CacheReader with reader r, delimiter d
 // and check hash h
-func NewCacheReader(r io.Reader, d, h []byte) *CacheReader {
+func NewCacheReader(r io.Reader, d, h []byte) io.Reader {
 	if len(d) == 0 {
 		panic("NewCacheReader(): passed nil delimiter")
+	}
+	if len(h) != md5.Size {
+		return r
 	}
 	return &CacheReader{r, d, h, nil}
 }
@@ -41,13 +44,15 @@ func (cr *CacheReader) Read(p []byte) (n int, err error) {
 				cr.chunk = append(cr.chunk, p[i:n]...)
 				break
 			}
+
 			j += k
 			hash.Write(append(cr.chunk, p[i:j]...))
-			if bytes.Compare(cr.ch_hash, hash.Sum(nil)) == 0 {
+			if bytes.Compare(cr.chHash, hash.Sum(nil)) == 0 {
 				n = j
 				err = io.EOF
 				break
 			}
+
 			cr.chunk = nil
 			j += len(cr.delim)
 			i = j
