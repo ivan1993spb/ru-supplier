@@ -1,8 +1,3 @@
-// +build windows
-
-// To get rid of the cmd window, instead run
-// go build -ldflags="-H windowsgui"
-
 package main
 
 import (
@@ -22,7 +17,7 @@ import "github.com/lxn/walk"
 
 const (
 	// require root privileges if true
-	_ALLOW_REWRITE_HOSTS_FILE = true
+	_ALLOW_REWRITE_HOSTS_FILE = false
 	// true to allow run server on application start
 	_RUN_SERVER_ON_STARTING = true
 	// time for which proxy must start
