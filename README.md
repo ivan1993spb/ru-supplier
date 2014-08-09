@@ -1,4 +1,4 @@
-# RU-SUPPLIER README #
+# ru-supplier #
 
 This tool helps to monitor orders on zakupki.gov.ru. ru-supplier is simplest local proxy server with filter.
 
@@ -9,5 +9,4 @@ This tool helps to monitor orders on zakupki.gov.ru. ru-supplier is simplest loc
 * to form human friendly designed and fast readable rss feed with orders;
 * to cache last order;
 
-### How do I get set up? ###
-
+ru-supplier works together with any rss client.
