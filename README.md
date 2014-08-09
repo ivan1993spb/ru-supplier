@@ -10,3 +10,6 @@ This tool helps to monitor orders on zakupki.gov.ru. ru-supplier is simplest loc
 * to cache last order;
 
 ru-supplier works together with any rss client.
+
+// To get rid of the cmd window, instead run
+// go build -ldflags="-H windowsgui"
