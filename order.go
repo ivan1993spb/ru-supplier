@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"math"
 	"strconv"
@@ -91,8 +92,28 @@ type Order struct {
 	Errors           []error   // Ошибки при анализе закупки
 }
 
-func ParseOrder(rowData []byte) (*Order, error) {
-	return &Order, nil
+func ParseOrder(rowBytes []byte) (*Order, error) {
+	if len(rowBytes) == 0 {
+		goto ErrExit
+	}
+
+	var row [_ORDER_COLUMN_COUNT]string
+
+	for i := 0; i < _ORDER_COLUMN_COUNT; i++ {
+		if m := bytes.IndexByte(rowBytes, ';'); m > -1 {
+			row[i] = string(bytes.TrimSpace(rowBytes[:m]))
+			rowBytes = rowBytes[m+1:]
+		} else if i == _ORDER_COLUMN_COUNT-1 {
+			row[i] = string(bytes.TrimSpace(rowBytes))
+		} else {
+			goto ErrExit
+		}
+	}
+
+	return NewOrder(row), nil
+
+ErrExit:
+	return nil, errors.New("ParseOrder: invalid column count")
 }
 
 func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
