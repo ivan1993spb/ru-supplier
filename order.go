@@ -93,10 +93,6 @@ type Order struct {
 }
 
 func ParseOrder(rowBytes []byte) (*Order, error) {
-	if len(rowBytes) == 0 {
-		goto ErrExit
-	}
-
 	var row [_ORDER_COLUMN_COUNT]string
 
 	for i := 0; i < _ORDER_COLUMN_COUNT; i++ {
@@ -109,7 +105,6 @@ func ParseOrder(rowBytes []byte) (*Order, error) {
 			goto ErrExit
 		}
 	}
-
 	return NewOrder(row), nil
 
 ErrExit:

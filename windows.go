@@ -74,7 +74,7 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	if _ALLOW_REWRITE_HOSTS_FILE {
 		// edit hosts file
 		if err = CreateLocalHostIfNotExists(config.Host); err != nil {
-			log.Println("cannot create local addr:", err)
+			log.Fatal("cannot create local addr:", err)
 		}
 		defer func() {
 			// remove local host from hosts file

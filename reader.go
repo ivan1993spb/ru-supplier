@@ -53,7 +53,7 @@ func (p *OrderReader) ReadOrders(resp *http.Response) ([]*Order, error) {
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
-	if newestChunk[:len(newestChunk)-1] == '\n' {
+	if newestChunk[len(newestChunk)-1] == '\n' {
 		// cut delim \n if there is
 		newestChunk = newestChunk[:len(newestChunk)-1]
 	}
@@ -92,11 +92,11 @@ func (p *OrderReader) ReadOrders(resp *http.Response) ([]*Order, error) {
 	}
 
 	for {
-		dataRow, err := brdr.ReadBytes('\n')
+		rowData, err := brdr.ReadBytes('\n')
 		if err != nil && err != io.EOF {
 			return orders, err
 		}
-		if err == io.EOF && len(dataRow) == 0 {
+		if err == io.EOF && len(rowData) == 0 {
 			break
 		}
 		if order, err := ParseOrder(rowData); err == nil {
