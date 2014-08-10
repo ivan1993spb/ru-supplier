@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	_URL_REQUIRED_SCHEME            = "http"
-	_URL_REQUIRED_HOST              = "zakupki.gov.ru"
-	_URL_REQUIRED_PATH              = "/epz/order/orderCsvSettings/quickSearch/download.html"
-	_URL_REQUIRED_SORTING_TYPE      = "PUBLISH_DATE"
-	_URL_REQUIRED_SORTING_DIRECTION = "false"
+	_URL_REQUIRED_SCHEME               = "http"
+	_URL_REQUIRED_HOST                 = "zakupki.gov.ru"
+	_URL_REQUIRED_QUICK_SEARCH_PATH    = "/epz/order/orderCsvSettings/quickSearch/download.html"
+	_URL_REQUIRED_EXTENDED_SEARCH_PATH = "/epz/order/orderCsvSettings/extendedSearch/download.html"
+	_URL_REQUIRED_SORTING_TYPE         = "PUBLISH_DATE"
+	_URL_REQUIRED_SORTING_DIRECTION    = "false"
 )
 
 var RandGen = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -90,8 +91,10 @@ func Load(rawurl string) (*http.Response, error) {
 	if URL.Host != _URL_REQUIRED_HOST {
 		return nil, errors.New("invalid url host")
 	}
-	if URL.Path != _URL_REQUIRED_PATH {
-		return nil, errors.New("invalid url path")
+	if URL.Path != _URL_REQUIRED_QUICK_SEARCH_PATH {
+		if URL.Path != _URL_REQUIRED_EXTENDED_SEARCH_PATH {
+			return nil, errors.New("invalid url path")
+		}
 	}
 	// param sortBy defines type of sorting
 	if URL.Query().Get("sortBy") != _URL_REQUIRED_SORTING_TYPE {

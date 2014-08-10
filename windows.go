@@ -1,24 +1,14 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
-	"errors"
-	"io"
 	"log"
-	"os"
 	"os/exec"
-	"path"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/lxn/walk"
 )
 
 const (
-	// require root privileges if true
-	_ALLOW_REWRITE_HOSTS_FILE = false
 	// true to allow run server on application start
 	_RUN_SERVER_ON_STARTING = true
 	// time for which proxy must start
@@ -71,19 +61,6 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	 *                        INITIALIZATION                       *
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-	if _ALLOW_REWRITE_HOSTS_FILE {
-		// edit hosts file
-		if err = CreateLocalHostIfNotExists(config.Host); err != nil {
-			log.Fatal("cannot create local addr:", err)
-		}
-		defer func() {
-			// remove local host from hosts file
-			err = RemoveLocalHostIfExists(config.Host)
-			if err != nil {
-				log.Println("cannot remove local host:", err)
-			}
-		}()
-	}
 	startServer := func() {
 		if !server.IsRunning() {
 			go func() {
@@ -106,7 +83,11 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	if _RUN_SERVER_ON_STARTING && !server.IsRunning() {
 		startServer()
 	}
-	defer stopServer()
+	defer func() {
+		if server.IsRunning() {
+			stopServer()
+		}
+	}()
 	defer func() {
 		if err = config.Save(); err != nil {
 			log.Println("cannot save configures:", err)
@@ -376,114 +357,4 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 
 	mw.Run()
 	return
-}
-
-var ErrNotFoundHostFile = errors.New("cannot find hosts file")
-
-func CreateLocalHostIfNotExists(host string) error {
-	if host = strings.TrimSpace(host); len(host) == 0 {
-		panic("passed empty host")
-	}
-	if hostsPath := FileHostsPath(); len(hostsPath) > 0 {
-		fhosts, err := os.OpenFile(
-			hostsPath,
-			os.O_RDWR|os.O_APPEND|os.O_CREATE,
-			os.ModePerm,
-		)
-		if err != nil {
-			return errors.New("cannot open hosts file: " +
-				err.Error())
-		}
-		defer fhosts.Close()
-		r := bufio.NewReader(fhosts)
-		for {
-			line, err := r.ReadString('\n')
-			if err != nil && err != io.EOF {
-				return errors.New("cannot read hosts file: " +
-					err.Error())
-			}
-			if err == io.EOF && len(line) == 0 {
-				break
-			}
-			// skip comments
-			if comm := strings.IndexByte(line, '#'); comm > -1 {
-				line = line[:comm]
-			}
-			if len(line) == 0 {
-				continue
-			}
-			if fields := strings.Fields(line); len(fields) > 1 {
-				for i := 1; i < len(fields); i++ {
-					if strings.EqualFold(fields[i], host) {
-						return nil
-					}
-				}
-			}
-			if err == io.EOF {
-				break
-			}
-		}
-		_, err = fhosts.WriteString("\r\n127.0.0.1\t" + host + "\r\n")
-		return err
-	}
-	return ErrNotFoundHostFile
-}
-
-func FileHostsPath() string {
-	if root := os.Getenv("SystemRoot"); len(root) > 0 {
-		return path.Join(root, "system32", "drivers", "etc", "hosts")
-	}
-	return ""
-}
-
-func RemoveLocalHostIfExists(host string) error {
-	if host = strings.TrimSpace(host); len(host) == 0 {
-		panic("passed empty host")
-	}
-	if hostsPath := FileHostsPath(); len(hostsPath) > 0 {
-		fhosts, err := os.OpenFile(hostsPath, os.O_RDWR, os.ModePerm)
-		if err != nil {
-			return err
-		}
-		defer fhosts.Close()
-		buff := bytes.NewBuffer(nil)
-		rdr := bufio.NewReader(fhosts)
-		exp := regexp.MustCompile("(?i)" + regexp.QuoteMeta(host))
-		var line, comm string
-		for {
-			line, err = rdr.ReadString('\n')
-			if err != nil && err != io.EOF {
-				return err
-			}
-			if err == io.EOF && len(line) == 0 {
-				break
-			}
-			if i := strings.IndexByte(line, '#'); i > -1 {
-				line, comm = line[:i], line[i:]
-			}
-			if len(strings.TrimSpace(line)) == 0 {
-				buff.WriteString(line + comm)
-				continue
-			}
-			line = exp.ReplaceAllString(line, "")
-			if len(strings.Fields(line)) > 1 {
-				buff.WriteString(line + comm)
-			} else {
-				buff.WriteString(comm)
-			}
-			if err == io.EOF {
-				break
-			}
-		}
-		if _, err = fhosts.Seek(0, 0); err != nil {
-			return err
-		}
-		if n, err := buff.WriteTo(fhosts); err != nil {
-			return err
-		} else if err = fhosts.Truncate(n); err != nil {
-			return err
-		}
-		return nil
-	}
-	return ErrNotFoundHostFile
 }
