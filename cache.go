@@ -6,27 +6,34 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"log"
 	"os"
 )
+
+const _HASH_STORE_FILE_NAME = "cache.json"
 
 // CacheReader reads while does not find chunk which md5 hash sum
 // will matches with passed checking hash
 type CacheReader struct {
-	r       io.Reader
-	delim   []byte // chunk delimiter
-	ch_hash []byte // checking hex hash
-	chunk   []byte // current chunk
+	r      io.Reader
+	delim  []byte // chunk delimiter
+	chHash []byte // checking hex hash
+	chunk  []byte // current chunk
 }
 
 // NewCacheReader creates new CacheReader with reader r, delimiter d
 // and check hash h
-func NewCacheReader(r io.Reader, d, h []byte) *CacheReader {
+func NewCacheReader(r io.Reader, d, h []byte) io.Reader {
 	if len(d) == 0 {
 		panic("NewCacheReader(): passed nil delimiter")
+	}
+	if len(h) != md5.Size {
+		return r
 	}
 	return &CacheReader{r, d, h, nil}
 }
 
+// Read reads and checks chunks
 func (cr *CacheReader) Read(p []byte) (n int, err error) {
 	if n, err = cr.r.Read(p); len(cr.delim) > 0 && n > 0 {
 		var i, j, k int
@@ -37,13 +44,15 @@ func (cr *CacheReader) Read(p []byte) (n int, err error) {
 				cr.chunk = append(cr.chunk, p[i:n]...)
 				break
 			}
+
 			j += k
 			hash.Write(append(cr.chunk, p[i:j]...))
-			if bytes.Compare(cr.ch_hash, hash.Sum(nil)) == 0 {
+			if bytes.Compare(cr.chHash, hash.Sum(nil)) == 0 {
 				n = j
 				err = io.EOF
 				break
 			}
+
 			cr.chunk = nil
 			j += len(cr.delim)
 			i = j
@@ -66,40 +75,62 @@ type HashStore struct {
 	data  []*HashPair
 }
 
-func LoadHashStore(fname string) (*HashStore, error) {
-	file, err := os.Open(fname)
+func LoadHashStoreSimple() *HashStore {
+	hs, err := LoadHashStore(_HASH_STORE_FILE_NAME)
+	if hs == nil {
+		if err != nil {
+			log.Fatal("cannot load hashstore:", err)
+		} else {
+			panic("hashstore object is nil")
+		}
+	}
+	if err != nil {
+		log.Println("hashstore:", err)
+	}
+	return hs
+}
+
+func LoadHashStore(fname string) (hs *HashStore, err error) {
+	if len(fname) == 0 {
+		panic("hashstore: invalid file name")
+	}
+	hs = &HashStore{fname, nil}
+	var file *os.File
+	file, err = os.Open(fname)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &HashStore{fname, nil}, nil
+			err = nil
 		}
-		return nil, err
+		return
 	}
 	defer file.Close()
-	dec := json.NewDecoder(file)
 	var data map[string]string
-	if err = dec.Decode(&data); err != nil {
+	if err = json.NewDecoder(file).Decode(&data); err != nil {
 		if err == io.EOF {
-			return &HashStore{fname, nil}, nil
+			err = nil
 		}
-		return nil, err
+		return
 	}
-	hexdata := make([]*HashPair, 0)
+	hs.data = make([]*HashPair, 0)
 	for url, chunk := range data {
 		hex_url, err := hex.DecodeString(url)
 		if err != nil {
-			// corrupted data
 			continue
 		}
 		hex_chunk, err := hex.DecodeString(chunk)
 		if err != nil {
 			continue
 		}
-		hexdata = append(hexdata, &HashPair{hex_url, hex_chunk})
+		hs.data = append(hs.data, &HashPair{hex_url, hex_chunk})
 	}
-	return &HashStore{fname, hexdata}, nil
+	return
 }
 
-func (hs *HashStore) Flush() error {
+func (hs *HashStore) Save() error {
+	if len(hs.data) == 0 {
+		hs.Remove()
+		return nil
+	}
 	file, err := os.Create(hs.fname)
 	if err != nil {
 		return err
@@ -110,14 +141,13 @@ func (hs *HashStore) Flush() error {
 		data[hex.EncodeToString(pair.url)] =
 			hex.EncodeToString(pair.chunk)
 	}
-	enc := json.NewEncoder(file)
-	return enc.Encode(data)
+	return json.NewEncoder(file).Encode(data)
 }
 
 func (hs *HashStore) GetHashChunk(rawurl string) ([]byte, bool) {
 	if len(rawurl) > 0 {
 		hash := md5.New()
-		hash.Write([]byte(rawurl))
+		io.WriteString(hash, rawurl)
 		url := hash.Sum(nil)
 		for _, pair := range hs.data {
 			if bytes.Compare(pair.url, url) == 0 {
@@ -134,7 +164,7 @@ func (hs *HashStore) SetHashChunk(rawurl string, chunk []byte) {
 		return
 	}
 	hash := md5.New()
-	hash.Write([]byte(rawurl))
+	io.WriteString(hash, rawurl)
 	url := hash.Sum(nil)
 	hash.Reset()
 	hash.Write(chunk)
@@ -148,4 +178,10 @@ func (hs *HashStore) SetHashChunk(rawurl string, chunk []byte) {
 	}
 	// create pair if new url
 	hs.data = append(hs.data, &HashPair{url, chunk})
+}
+
+// Remove removes all cache
+func (hs *HashStore) Remove() error {
+	hs.data = nil
+	return os.Remove(hs.fname)
 }

@@ -1,49 +1,53 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"net/http"
+	"log"
 	"os"
 )
 
-// port must be 80 becouse some rss clients require this
-const _LOCAL_ADDR = "zakup-robot.ru:80"
-
 const (
-	_HASH_STORE_FILE       = "cache.json"
-	_LOG_ERROR_FILE_NAME   = "error.zakup.log"
-	_LOG_WARNING_FILE_NAME = "warning.zakup.log"
-)
-
-var (
-	log       *Log
-	hashstore *HashStore
+	_LOG_FILE_NAME     = "prog.log"
+	_CONFIG_FILE_NAME  = "config.json"
+	_FILTERS_FILE_NAME = "filters.json"
 )
 
 func main() {
-	var err error
-	log, err = NewLog(_LOG_ERROR_FILE_NAME, _LOG_WARNING_FILE_NAME)
-	if err != nil {
-		fmt.Println("can't create log file:", err)
-		os.Exit(1)
+	if logfile, err := os.OpenFile(
+		_LOG_FILE_NAME,
+		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+		os.ModePerm,
+	); err != nil {
+		log.Fatal(err)
+	} else {
+		log.SetFlags(log.LstdFlags)
+		log.SetOutput(logfile)
 	}
-	hashstore, err = LoadHashStore(_HASH_STORE_FILE)
-	if err != nil {
-		fmt.Println(err)
-		log.Error.Println(err)
-		os.Exit(1)
+	config, err := LoadConfig(_CONFIG_FILE_NAME)
+	if config == nil {
+		if err != nil {
+			log.Fatal("cannot load configs:", err)
+		} else {
+			panic("config object is nil")
+		}
 	}
-	lis, err := net.Listen("tcp", _LOCAL_ADDR)
 	if err != nil {
-		fmt.Println(err)
-		log.Error.Println(err)
-		os.Exit(1)
+		log.Println("config:", err)
 	}
-	err = http.Serve(NewServer(lis).Bind())
+	filter, err := LoadFilter(_FILTERS_FILE_NAME)
+	if filter == nil {
+		if err != nil {
+			log.Fatal("cannot load filters:", err)
+		} else {
+			panic("filter object is nil")
+		}
+	}
 	if err != nil {
-		fmt.Println(err)
-		log.Error.Println(err)
-		os.Exit(1)
+		log.Println("filter:", err)
+	}
+	if err = InterfaceStart(
+		NewServer(config, filter),
+		config,
+	); err != nil {
+		log.Fatal("interface fatal error:", err)
 	}
 }
