@@ -105,6 +105,7 @@ func ParseOrder(rowBytes []byte) (*Order, error) {
 			return nil, errors.New("ParseOrder: invalid column count")
 		}
 	}
+
 	return NewOrder(row), nil
 }
 

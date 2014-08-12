@@ -100,28 +100,18 @@ func gen(URL *url.URL, host string) *url.URL {
 		return nil
 	}
 
+	vals := URL.Query()
 	if URL.Path == _URL_REQUIRED_QUICK_SEARCH_PATH {
-		URL.Query().Set("quickSearch", "true")
+		vals.Set("quickSearch", "true")
 	} else {
-		URL.Query().Set("quickSearch", "false")
+		vals.Set("quickSearch", "false")
 	}
-	if URL.Query().Get("sortBy") != _URL_REQUIRED_SORTING_TYPE {
-		URL.Query().Set(
-			"sortBy",
-			_URL_REQUIRED_SORTING_TYPE,
-		)
-	}
-	if URL.Query().Get("sortDirection") !=
-		_URL_REQUIRED_SORTING_DIRECTION {
-
-		URL.Query().Set(
-			"sortDirection",
-			_URL_REQUIRED_SORTING_DIRECTION,
-		)
-	}
-	URL.Query().Set("userId", "null")
-	URL.Query().Set("conf", "true;true;true;true;true;true;true;"+
+	vals.Set("sortBy", _URL_REQUIRED_SORTING_TYPE)
+	vals.Set("sortDirection", _URL_REQUIRED_SORTING_DIRECTION)
+	vals.Set("userId", "null")
+	vals.Set("conf", "true;true;true;true;true;true;true;"+
 		"true;true;true;true;true;true;true;true;true;true;")
+	URL.RawQuery = vals.Encode()
 
 	return &url.URL{
 		Scheme: "http",

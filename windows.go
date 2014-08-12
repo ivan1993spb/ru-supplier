@@ -17,7 +17,7 @@ const (
 
 const (
 	_PROG_ICON_FILE_NAME        = "eagle.ico"
-	_PROG_DESCRIPTION_FILE_NAME = "README.md"
+	_PROG_DESCRIPTION_FILE_NAME = "docs/index.html"
 )
 
 const (
@@ -32,6 +32,7 @@ const (
 	_ACTION_TITLE_FILTER_ENABLED  = "Включить фильтр"
 	_ACTION_TITLE_FILTER_DISABLED = "Выключить фильтр"
 	_ACTION_TITLE_REMOVE_CACHE    = "Сбросить кэш"
+	_ACTION_TITLE_OPEN_URL_GEN    = "Генератор ссылок"
 	_ACTION_TITLE_OPEN_DIR        = "Папка настроек"
 	_ACTION_TITLE_OPEN_README     = "Инструкция"
 	_ACTION_TITLE_EXIT            = "Выход"
@@ -201,6 +202,16 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 		return
 	}
 
+	openURLGenAction := walk.NewAction()
+	err = openURLGenAction.SetText(_ACTION_TITLE_OPEN_URL_GEN)
+	if err != nil {
+		return
+	}
+	err = ni.ContextMenu().Actions().Add(openURLGenAction)
+	if err != nil {
+		return
+	}
+
 	openDirAction := walk.NewAction()
 	err = openDirAction.SetText(_ACTION_TITLE_OPEN_DIR)
 	if err != nil {
@@ -328,6 +339,15 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 		}
 	})
 
+	openURLGenAction.Triggered().Attach(func() {
+		// err = exec.Command(
+		// 	"cmd", "/C", "start", _PROG_DESCRIPTION_FILE_NAME,
+		// ).Start()
+		// if err != nil {
+		// 	log.Println("cannot open url generator:", err)
+		// }
+	})
+
 	openDirAction.Triggered().Attach(func() {
 		err = exec.Command("cmd", "/C", "start", ".").Start()
 		if err != nil {
@@ -339,8 +359,7 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 
 	openReadMeAction.Triggered().Attach(func() {
 		err = exec.Command(
-			"notepad",
-			_PROG_DESCRIPTION_FILE_NAME,
+			"cmd", "/C", "start", _PROG_DESCRIPTION_FILE_NAME,
 		).Start()
 		if err != nil {
 			log.Println("cannot open README:", err)
