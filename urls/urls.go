@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/url"
 
 	"github.com/lxn/walk"
@@ -19,16 +18,18 @@ const (
 )
 
 const (
-	_URL_REQUIRED_SCHEME            = "http"
-	_URL_REQUIRED_HOST              = "zakupki.gov.ru"
-	_URL_REQUIRED_SORTING_TYPE      = "PUBLISH_DATE"
-	_URL_REQUIRED_SORTING_DIRECTION = "false"
+	_URL_REQUIRED_SCHEME               = "http"
+	_URL_REQUIRED_HOST                 = "zakupki.gov.ru"
+	_URL_REQUIRED_SORTING_TYPE         = "PUBLISH_DATE"
+	_URL_REQUIRED_SORTING_DIRECTION    = "false"
+	_URL_REQUIRED_QUICK_SEARCH_PATH    = "/epz/order/orderCsvSettings/quickSearch/download.html"
+	_URL_REQUIRED_EXTENDED_SEARCH_PATH = "/epz/order/orderCsvSettings/extendedSearch/download.html"
 )
 
 var Paths = map[string]string{
-	"/epz/order/extendedsearch/search.html": "/epz/order/orderCsvSettings/extendedSearch/download.html",
-	"/epz/order/quicksearch/search.html":    "/epz/order/orderCsvSettings/quickSearch/download.html",
-	"/epz/order/quicksearch/update.html":    "/epz/order/orderCsvSettings/extendedSearch/download.html",
+	"/epz/order/extendedsearch/search.html": _URL_REQUIRED_EXTENDED_SEARCH_PATH,
+	"/epz/order/quicksearch/search.html":    _URL_REQUIRED_QUICK_SEARCH_PATH,
+	"/epz/order/quicksearch/update.html":    _URL_REQUIRED_QUICK_SEARCH_PATH,
 }
 
 func main() {
@@ -65,7 +66,10 @@ func main() {
 							if err != nil {
 								return
 							}
-							te.SetText(gen(URL, le.Text()).String())
+							genURL := gen(URL, le.Text())
+							if genURL != nil {
+								te.SetText(genURL.String())
+							}
 						},
 					},
 					PushButton{
@@ -90,10 +94,16 @@ func gen(URL *url.URL, host string) *url.URL {
 	if URL.Host != _URL_REQUIRED_HOST {
 		return nil
 	}
-	if redirect, ok := Paths[URL.Path]; ok {
-		URL.Path = redirect
+	if path, ok := Paths[URL.Path]; ok {
+		URL.Path = path
 	} else {
 		return nil
+	}
+
+	if URL.Path == _URL_REQUIRED_QUICK_SEARCH_PATH {
+		URL.Query().Set("quickSearch", "true")
+	} else {
+		URL.Query().Set("quickSearch", "false")
 	}
 	if URL.Query().Get("sortBy") != _URL_REQUIRED_SORTING_TYPE {
 		URL.Query().Set(
@@ -103,11 +113,16 @@ func gen(URL *url.URL, host string) *url.URL {
 	}
 	if URL.Query().Get("sortDirection") !=
 		_URL_REQUIRED_SORTING_DIRECTION {
+
 		URL.Query().Set(
 			"sortDirection",
 			_URL_REQUIRED_SORTING_DIRECTION,
 		)
 	}
+	URL.Query().Set("userId", "null")
+	URL.Query().Set("conf", "true;true;true;true;true;true;true;"+
+		"true;true;true;true;true;true;true;true;true;true;")
+
 	return &url.URL{
 		Scheme: "http",
 		Host:   host,

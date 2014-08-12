@@ -102,13 +102,10 @@ func ParseOrder(rowBytes []byte) (*Order, error) {
 		} else if i == _ORDER_COLUMN_COUNT-1 {
 			row[i] = string(bytes.TrimSpace(rowBytes))
 		} else {
-			goto ErrExit
+			return nil, errors.New("ParseOrder: invalid column count")
 		}
 	}
 	return NewOrder(row), nil
-
-ErrExit:
-	return nil, errors.New("ParseOrder: invalid column count")
 }
 
 func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
