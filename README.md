@@ -1,8 +1,8 @@
 # Ru-supplier #
 
-[Russian documentation](docs/index.html)
-[Bitbucket repo](https://bitbucket.org/pushkin_ivan/ru-supplier)
-[Author](https://twitter.com/IvanDeveloper)
+* [Russian documentation](docs/index.html)
+* [Bitbucket repo](https://bitbucket.org/pushkin_ivan/ru-supplier)
+* [Author](https://twitter.com/IvanDeveloper)
 
 ### Ru-supplier ###
 
@@ -48,6 +48,7 @@ or
 #!
 C:\> cd path-to-ru-supplier
 C:\path-to-ru-supplier> builder.bat
+C:\path-to-ru-supplier> start build
 ```
 then will be created build directory with program files
 
