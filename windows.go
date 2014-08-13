@@ -340,12 +340,12 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	})
 
 	openURLGenAction.Triggered().Attach(func() {
-		// err = exec.Command(
-		// 	"cmd", "/C", "start", _PROG_DESCRIPTION_FILE_NAME,
-		// ).Start()
-		// if err != nil {
-		// 	log.Println("cannot open url generator:", err)
-		// }
+		err = exec.Command(
+			"urls/urls",
+		).Start()
+		if err != nil {
+			log.Println("cannot open url generator:", err)
+		}
 	})
 
 	openDirAction.Triggered().Attach(func() {

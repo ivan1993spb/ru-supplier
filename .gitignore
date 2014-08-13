@@ -1,5 +1,6 @@
 /tests
 /files
+/build
 *_test.go
 *.exe
 *.log

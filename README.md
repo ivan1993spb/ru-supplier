@@ -1,6 +1,8 @@
 # Ru-supplier #
 
 [Russian documentation](docs/index.html)
+[Bitbucket repo](https://bitbucket.org/pushkin_ivan/ru-supplier)
+[Author](https://twitter.com/IvanDeveloper)
 
 ### Ru-supplier ###
 
@@ -40,6 +42,14 @@ C:\path-to-ru-supplier> go build -ldflags="-H windowsgui"
 C:\path-to-ru-supplier> cd urls
 C:\path-to-ru-supplier\urls> go build -ldflags="-H windowsgui"
 ```
+or
+
+```
+#!
+C:\> cd path-to-ru-supplier
+C:\path-to-ru-supplier> builder.bat
+```
+then will be created build directory with program files
 
 ### How it works ###
 1. go to the [http://zakupki.gov.ru](http://zakupki.gov.ru)
