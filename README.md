@@ -2,8 +2,10 @@
 
 [Russian documentation](docs/index.html)
 
-### Ru-supplier: ###
+### Ru-supplier ###
 
+* version 2.0
+* is written on [Golang](http://golang.org)
 * helps to monitor orders on zakupki.gov.ru;
 * makes work with orders really faster;
 * is simplest local proxy server with filter;
@@ -29,11 +31,11 @@ See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supp
 
 ### Compilation ###
 
-You can to download Golang compiler [here](http://golang.org)
+You have to download Golang compiler [here](http://golang.org)
 
 ```
 #!
-
+C:\> cd path-to-ru-supplier
 C:\path-to-ru-supplier> go build -ldflags="-H windowsgui"
 C:\path-to-ru-supplier> cd urls
 C:\path-to-ru-supplier\urls> go build -ldflags="-H windowsgui"
@@ -45,5 +47,5 @@ C:\path-to-ru-supplier\urls> go build -ldflags="-H windowsgui"
 3. copy request url
 4. convert request url into rss feed link by url generator
 5. run ru-supplier
-5. open your rss client
-6. subscribe to rss feed
+6. open your rss client
+7. subscribe to rss feed
