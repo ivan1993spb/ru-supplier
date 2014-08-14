@@ -2,42 +2,12 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"math"
-	"net"
 	"strconv"
 	"strings"
 	"time"
 )
-
-type ErrParsing uint8
-
-const (
-	_INVALID_LAW_ID ErrParsing = iota
-	_INVALID_EXHIBITION_NUMBER
-	_INVALID_START_ORDER_PRICE
-	_UNKNOWN_CURRENCY
-	_UNKNOWN_START_FILING_DATE
-	_UNKNOWN_FINISH_FILING_DATE
-)
-
-func (err ErrParsing) Error() string {
-	switch err {
-	case _INVALID_LAW_ID:
-		return "Invalid or unknown law id"
-	case _INVALID_EXHIBITION_NUMBER:
-		return "Invalid exhibition number"
-	case _INVALID_START_ORDER_PRICE:
-		return "Invalid start order price"
-	case _UNKNOWN_CURRENCY:
-		return "Unknown currency"
-	case _UNKNOWN_START_FILING_DATE:
-		return "Unknown start filing date"
-	case _UNKNOWN_FINISH_FILING_DATE:
-		return "Unknown finish filing date"
-	}
-	return "Unknown parsing error"
-}
 
 type OrderLaw int
 
@@ -57,19 +27,7 @@ func ParseLow(str string) (OrderLaw, error) {
 	case strings.Contains(str, "94"):
 		return FZ94, nil
 	}
-	return -1, _INVALID_LAW_ID
-}
-
-func (l OrderLaw) String() string {
-	switch l {
-	case FZ44:
-		return "44-ФЗ"
-	case FZ223:
-		return "223-ФЗ"
-	case FZ94:
-		return "94-ФЗ"
-	}
-	return ""
+	return -1, errors.New("Invalid or unknown law id")
 }
 
 type Price float64
@@ -89,95 +47,126 @@ func ParsePrice(str string) (Price, error) {
 	} else {
 		price = math.Floor(price)
 	}
-	return Price(price / 100), err
+	return Price(price / 100), nil
 }
 
-func (p Price) String() string {
-	price := float64(p)
-	kop := math.Mod(price*100, 100)
-	output := fmt.Sprintf(",%02.f", kop)
-	price -= kop / 100
-	if price > 0 {
-		for price > 0 {
-			chunk := math.Mod(price, 1000)
-			price -= chunk
-			price /= 1000
-			output = fmt.Sprintf(" %03.f%s", chunk, output)
-		}
-		return strings.TrimLeft(output, "0 ")
-	}
-	return "0" + output
-}
+const (
+	_FIELD_LAW_ID int = iota
+	_FIELD_ORDER_ID
+	_FIELD_ORDER_TYPE
+	_FIELD_ORDER_NAME
+	_FIELD_EXHIBITION_NUMBER
+	_FIELD_EXHIBITION_NAME
+	_FIELD_START_ORDER_PRICE
+	_FIELD_CURRENCY_ID
+	_FIELD_OKDP
+	_FIELD_OKPD
+	_FIELD_ORGANISATION_NAME
+	_FIELD_PUB_DATE
+	_FIELD_LAST_EVENT_DATE
+	_FIELD_ORDER_STAGE
+	_FIELD_FEATURES
+	_FIELD_START_FILING_DATE
+	_FIELD_FINISH_FILING_DATE
+	_ORDER_COLUMN_COUNT // result column count
+)
 
 type Order struct {
-	LawId            OrderLaw // Номер ФЗ
-	OrderId          string   // Реестровый номер закупки
-	OrderType        string   // Способ размещения закупки
-	OrderName        string   // Наименование закупки
-	ExhibitionNumber int      // Номер лота
-	ExhibitionName   string   // Наименование лота
-	StartOrderPrice  Price    // Начальная (максимальная)
-	CurrencyId       string   // Код валюты
-	OKDP             string   // Классификация по ОКДП
-	OKPD             string   // Классификация по ОКПД
-	OrganisationName string   // Организация, размещающая заказ
-	PubDate          string   // Дата публикации
-	LastEventDate    string   // Дата последнего события
-	OrderStage       string   // Этап закупки (размещения заказа)
-	Features         string   // Особенности размещения заказа
-	StartDilingDate  string   // Дата начала подачи заявок
-	FinishDilingDate string   // Дата окончания подачи заявок
-	Errors           []error  // Ошибки при анализе закупки
+	LawId            OrderLaw  // Номер ФЗ
+	OrderId          string    // Реестровый номер закупки
+	OrderType        string    // Способ размещения закупки
+	OrderName        string    // Наименование закупки
+	ExhibitionNumber int       // Номер лота
+	ExhibitionName   string    // Наименование лота
+	StartOrderPrice  Price     // Начальная (максимальная) цена
+	CurrencyId       string    // Код валюты
+	OKDP             string    // Классификация по ОКДП
+	OKPD             string    // Классификация по ОКПД
+	OrganisationName string    // Организация, размещающая заказ
+	PubDate          time.Time // Дата публикации
+	LastEventDate    time.Time // Дата последнего события
+	OrderStage       string    // Этап закупки (размещения заказа)
+	Features         string    // Особенности размещения заказа
+	StartFilingDate  time.Time // Дата начала подачи заявок
+	FinishFilingDate time.Time // Дата окончания подачи заявок
+	Errors           []error   // Ошибки при анализе закупки
 }
 
-func NewOrder(law_id, order_id, order_type, order_name,
-	exhibition_number, exhibition_name, start_order_price,
-	currency_id, okdp, okpd, organisation_name, pub_date,
-	last_event_date, order_stage, features, start_diling_date,
-	finish_diling_date string) (order *Order) {
+func ParseOrder(rowBytes []byte) (*Order, error) {
+	var row [_ORDER_COLUMN_COUNT]string
 
-	order = &Order{-1, "", order_type, order_name,
-		0, exhibition_name, 0, currency_id, okdp, okpd,
-		organisation_name, pub_date, last_event_date,
-		order_stage, features, "", "", nil}
-
-	var err error
-	order.LawId, err = ParseLow(law_id)
-	if err != nil {
-		order.PushError(_INVALID_LAW_ID)
-		err = nil
-	}
-	order.OrderId = strings.TrimLeft(order_id, "№")
-	if len(exhibition_number) > 0 {
-		// Только для многолотовых закупок
-		order.ExhibitionNumber, err = strconv.Atoi(exhibition_number)
-		if err != nil {
-			order.PushError(_INVALID_EXHIBITION_NUMBER)
-			err = nil
+	for i := 0; i < _ORDER_COLUMN_COUNT; i++ {
+		if m := bytes.IndexByte(rowBytes, ';'); m > -1 {
+			row[i] = string(bytes.TrimSpace(rowBytes[:m]))
+			rowBytes = rowBytes[m+1:]
+		} else if i == _ORDER_COLUMN_COUNT-1 {
+			row[i] = string(bytes.TrimSpace(rowBytes))
+		} else {
+			return nil, errors.New("ParseOrder: invalid column count")
 		}
 	}
-	order.StartOrderPrice, err = ParsePrice(start_order_price)
+
+	return NewOrder(row), nil
+}
+
+func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
+	order = &Order{
+		OrderId:          strings.TrimLeft(row[_FIELD_ORDER_ID], "№"),
+		OrderType:        row[_FIELD_ORDER_TYPE],
+		OrderName:        row[_FIELD_ORDER_NAME],
+		ExhibitionName:   row[_FIELD_EXHIBITION_NAME],
+		CurrencyId:       row[_FIELD_CURRENCY_ID],
+		OKDP:             row[_FIELD_OKDP],
+		OKPD:             row[_FIELD_OKPD],
+		OrganisationName: row[_FIELD_ORGANISATION_NAME],
+		OrderStage:       row[_FIELD_ORDER_STAGE],
+		Features:         row[_FIELD_FEATURES],
+	}
+	var err error
+	order.LawId, err = ParseLow(row[_FIELD_LAW_ID])
 	if err != nil {
-		order.PushError(_INVALID_START_ORDER_PRICE)
-		err = nil
+		order.PushError(err)
 	}
-	if len(order.CurrencyId) == 0 {
-		order.PushError(_UNKNOWN_CURRENCY)
+	if len(row[_FIELD_EXHIBITION_NUMBER]) > 0 {
+		// Только для многолотовых закупок по ФЗ 223
+		order.ExhibitionNumber, err =
+			strconv.Atoi(row[_FIELD_EXHIBITION_NUMBER])
+		if err != nil {
+			order.PushError(errors.New("Invalid exhibition number: " +
+				err.Error()))
+		}
 	}
-	if len(start_diling_date) == 0 {
-		// Когда по какой-то причине в csv файле отсутствует дата
-		// начала приема заявок
-		// назначаем дату последнего события и выводим ошибку
-		order.StartDilingDate = last_event_date
-		order.PushError(_UNKNOWN_START_FILING_DATE)
-	} else {
-		order.StartDilingDate = start_diling_date
+	order.StartOrderPrice, err =
+		ParsePrice(row[_FIELD_START_ORDER_PRICE])
+	if err != nil {
+		order.PushError(errors.New("Invalid order price: " +
+			err.Error()))
 	}
-	if len(finish_diling_date) == 0 {
-		// отсутствует дата окончания приема заявок
-		order.PushError(_UNKNOWN_FINISH_FILING_DATE)
-	} else {
-		order.FinishDilingDate = finish_diling_date
+	if len(row[_FIELD_CURRENCY_ID]) == 0 {
+		order.PushError(errors.New("Unknown currency"))
+	}
+	order.PubDate, err = ParseRusFormatDate(row[_FIELD_PUB_DATE])
+	if err != nil {
+		order.PushError(errors.New("Unknown publish date: " +
+			err.Error()))
+	}
+	order.LastEventDate, err =
+		ParseRusFormatDate(row[_FIELD_LAST_EVENT_DATE])
+	if err != nil {
+		order.PushError(errors.New("Unknown last event date: " +
+			err.Error()))
+	}
+	order.StartFilingDate, err =
+		ParseRusFormatDate(row[_FIELD_START_FILING_DATE])
+	if err != nil {
+		order.PushError(errors.New("Unknown start filing date: " +
+			err.Error()))
+	}
+	order.FinishFilingDate, err =
+		ParseRusFormatDate(row[_FIELD_FINISH_FILING_DATE])
+	if err != nil {
+		order.PushError(errors.New("Unknown finish filing date: " +
+			err.Error()))
 	}
 	return
 }
@@ -186,78 +175,4 @@ func (order *Order) PushError(err error) {
 	if err != nil {
 		order.Errors = append(order.Errors, err)
 	}
-}
-
-func (order *Order) Title() (title string) {
-	title = "№" + order.OrderId
-	if order.ExhibitionNumber > 0 {
-		title += " Лот " + strconv.Itoa(order.ExhibitionNumber)
-	}
-	return
-}
-
-func (order *Order) Link() string {
-	return MakeLink(order.OrderId)
-}
-
-func (order *Order) ShortLink() string {
-	host, _, _ := net.SplitHostPort(_LOCAL_ADDR)
-	if len(host) == 0 {
-		host = "localhost"
-	}
-	return fmt.Sprintf("http://%s/%s?order=%s", host,
-		strings.TrimLeft(_PATH_TO_SHORT_LINKS, "/"), order.OrderId)
-}
-
-func (order *Order) Description() string {
-	buff := bytes.NewBuffer(nil)
-	err := tmpl.Execute(buff, order)
-	if err != nil {
-		log.Error.Println("template execution error:", err)
-		return ""
-	}
-	return buff.String()
-}
-
-func (order *Order) PubDateRFC1123() string {
-	chunks := strings.SplitN(order.PubDate, ".", 3)
-	if len(chunks) != 3 {
-		// Bad date format
-		return order.PubDate
-	}
-	day, err := strconv.Atoi(chunks[0])
-	if err != nil {
-		return order.PubDate
-	}
-	month, err := strconv.Atoi(chunks[1])
-	if err != nil {
-		return order.PubDate
-	}
-	year, err := strconv.Atoi(chunks[2])
-	if err != nil {
-		return order.PubDate
-	}
-	return time.Date(year, time.Month(month), day,
-		0, 0, 0, 0, time.Local).Format(time.RFC1123)
-}
-
-func MakeLink(order_id string) string {
-	return fmt.Sprint("http://zakupki.gov.ru",
-		"/epz/order/quicksearch/update.html",
-		"?placeOfSearch=FZ_44&_placeOfSearch=on",
-		"&placeOfSearch=FZ_223&_placeOfSearch=on",
-		"&placeOfSearch=FZ_94&_placeOfSearch=on",
-		"&priceFrom=0&priceTo=200+000+000+000",
-		"&publishDateFrom=&publishDateTo=",
-		"&updateDateFrom=&updateDateTo=",
-		"&orderStages=AF&_orderStages=on",
-		"&orderStages=CA&_orderStages=on",
-		"&orderStages=PC&_orderStages=on",
-		"&orderStages=PA&_orderStages=on",
-		"&sortDirection=false&sortBy=UPDATE_DATE",
-		"&recordsPerPage=_10&pageNo=1",
-		"&searchString=", order_id,
-		"&strictEqual=false&morphology=false",
-		"&showLotsInfo=false&isPaging=false",
-		"&isHeaderClick=&checkIds=")
 }
