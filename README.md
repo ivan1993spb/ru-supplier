@@ -2,7 +2,7 @@
 
 * [Russian documentation](docs/index.html)
 * [Bitbucket repo](https://bitbucket.org/pushkin_ivan/ru-supplier)
-* [Author](https://twitter.com/IvanDeveloper)
+* [Pushkin Ivan](mailto://pushkin13@bk.ru)
 
 ### Ru-supplier ###
 
