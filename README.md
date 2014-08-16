@@ -34,24 +34,20 @@ See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supp
 
 ### Compilation ###
 
-You have to download Golang compiler [here](http://golang.org)
+You have to download and install:
+* Golang compiler from [here](http://golang.org/doc/install)
+* Git from [here](http://git-scm.com/downloads)
+* Mercurial from [here](http://mercurial.selenic.com/wiki/Download)
 
-```
-#!
-C:\> cd path-to-ru-supplier
-C:\path-to-ru-supplier> go build -ldflags="-H windowsgui"
-C:\path-to-ru-supplier> cd urls
-C:\path-to-ru-supplier\urls> go build -ldflags="-H windowsgui"
-```
-or
+Then download this repo.
 
 ```
 #!
 C:\> cd path-to-ru-supplier
 C:\path-to-ru-supplier> builder.bat
-C:\path-to-ru-supplier> start build
 ```
-then will be created build directory with program files
+Then will be created and opened directory with program files.
+After compilation you have to create local host in hosts file.
 
 ### How it works ###
 1. go to the [http://zakupki.gov.ru](http://zakupki.gov.ru)

@@ -1,7 +1,7 @@
 
 :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: ::
 ::                                                       ::
-::  Script for compilation of ru-supplier programm       ::
+::  Script for compilation of ru-supplier program        ::
 ::  Author: Pushkin Ivan <pushkin13@bk.ru>               ::
 ::  Link: https://bitbucket.org/pushkin_ivan/ru-supplier ::
 ::                                                       ::
@@ -13,7 +13,7 @@
 :: Printing Programm name, author, licence
 ::
 echo RU-SUPPLIER & echo.
-echo Author: Pushkin Ivan [pushkin13@bk.ru]
+echo Author: Pushkin Ivan (pushkin13@bk.ru)
 type LICENSE & echo.
 
 ::
@@ -41,17 +41,20 @@ if %ERRORLEVEL% NEQ 0 (
 	echo Please install mercurial
 	goto :end
 )
+echo mercurial... exists
 where /Q git
 if %ERRORLEVEL% NEQ 0 (
 	echo Error: git was not found
 	echo Please install git and create git in PATH
 	goto :end
 )
+echo git... exists
 
 ::
 :: Checking packages
 ::
 echo Checking packages
+
 if not exist "%GOPATH%\src\code.google.com/p/go-charset/charset" (
 	echo Golang package code.google.com/p/go-charset/charset was not found
 	echo Downloading package code.google.com/p/go-charset/charset...
@@ -80,6 +83,9 @@ if not exist "%GOPATH%\src\github.com/lxn/walk" (
 )
 echo Package github.com/lxn/walk... exists
 
+:: inform that that's ok
+echo Your system is ready to compile program
+
 ::
 :: Making directories and copy docs
 ::
@@ -107,6 +113,9 @@ if %ERRORLEVEL% NEQ 0 (
 	echo Compilation error: check golang version and .go files
 	goto :end
 )
+:: rename
+for %%* in (.) do set CurrDirName=%%~n*
+move %CurrDirName%.exe ru-supplier.exe
 move ru-supplier.exe build
 
 ::
@@ -135,3 +144,4 @@ start build
 :: End builder.bat file
 ::
 :end
+pause
