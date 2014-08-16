@@ -20,7 +20,7 @@ type LICENSE & echo.
 :: Checking compiler
 ::
 echo Checking compiler...
-where go
+where /Q go
 if %ERRORLEVEL% NEQ 0 (
 	echo Error: compiler was not found
 	echo Please install Golang
@@ -32,17 +32,28 @@ if "%GOPATH%" == "" (
 )
 
 ::
+:: Checking environment
+::
+echo Checking environment...
+where /Q hg
+if %ERRORLEVEL% NEQ 0 (
+	echo Error: mercurial was not found
+	echo Please install mercurial
+	goto :end
+)
+where /Q git
+if %ERRORLEVEL% NEQ 0 (
+	echo Error: git was not found
+	echo Please install git and create git in PATH
+	goto :end
+)
+
+::
 :: Checking packages
 ::
 echo Checking packages
 if not exist "%GOPATH%\src\code.google.com/p/go-charset/charset" (
 	echo Golang package code.google.com/p/go-charset/charset was not found
-	where hg
-	if %ERRORLEVEL% NEQ 0 (
-		echo Error: mercurial was not found
-		echo Please install mercurial
-		goto :end
-	)
 	echo Downloading package code.google.com/p/go-charset/charset...
 	go get code.google.com/p/go-charset/charset
 )
@@ -57,12 +68,6 @@ echo Package code.google.com/p/go-charset/data... exists
 
 if not exist "%GOPATH%\src\github.com/gorilla/feeds" (
 	echo Golang package github.com/gorilla/feeds was not found
-	where git
-	if %ERRORLEVEL% NEQ 0 (
-		echo Error: git was not found
-		echo Please install git
-		goto :end
-	)
 	echo Downloading package github.com/gorilla/feeds...
 	go get github.com/gorilla/feeds
 )
@@ -126,5 +131,7 @@ move urls\urls.exe build\urls
 echo RU-SUPPLIER successfully installed in: %CD%\build\
 start build
 
-
+::
+:: End builder.bat file
+::
 :end
