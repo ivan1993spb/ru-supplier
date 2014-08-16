@@ -1,0 +1,24 @@
+body {
+	margin: 40px 20px;
+}
+
+img {
+	border: 1px #999 dashed;
+	padding: 17px;
+	margin: 17px;
+}
+
+a[href] {
+	color: #00f;
+	text-decoration: none;
+}
+
+a[href]:hover {
+	color: #f00;
+	text-decoration: underline;
+}
+
+h1, h2, h3 {
+	font-family: Georgia;
+	margin: 25px 0px;
+}

@@ -26,10 +26,12 @@ if %ERRORLEVEL% NEQ 0 (
 	echo Please install Golang
 	goto :end
 )
+echo Compiler exists
 if "%GOPATH%" == "" (
 	echo Please define GOPATH variable
 	goto :end
 )
+echo GOPATH is set up
 
 ::
 :: Checking environment
@@ -96,7 +98,7 @@ if exist build (
 md build
 md build\urls
 md build\docs
-copy docs build\docs
+xcopy /s docs build\docs
 
 ::
 :: Programm compilation and prog files coping
@@ -113,9 +115,11 @@ if %ERRORLEVEL% NEQ 0 (
 	echo Compilation error: check golang version and .go files
 	goto :end
 )
-:: rename
 for %%* in (.) do set CurrDirName=%%~n*
-move %CurrDirName%.exe ru-supplier.exe
+if "%CurrDirName%" NEQ "ru-supplier" (
+	:: rename
+	move %CurrDirName%.exe ru-supplier.exe
+)
 move ru-supplier.exe build
 
 ::
