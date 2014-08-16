@@ -9,18 +9,18 @@
 * author: Pushkin Ivan
 * version 2.0
 * is written on [Golang](http://golang.org)
-* helps to monitor orders on zakupki.gov.ru;
-* makes work with orders really faster;
-* is simplest local proxy server with filter;
-* works together with any rss client;
-* works only on windows 7+ platforms;
+* helps to monitor orders on zakupki.gov.ru
+* makes work with orders really faster
+* is simplest local proxy server with filter
+* works together with any rss client
+* works only on windows 7+ platforms
 
 ### Ru-supplier can: ###
 
-* to read csv stream from zakupki.gov.ru and parse orders;
-* to filter orders by PCRE regular expressions;
-* to form human friendly designed and fast readable rss feed with orders;
-* to cache last order;
+* to read csv stream from zakupki.gov.ru and parse orders
+* to filter orders by PCRE regular expressions
+* to form human friendly designed and fast readable rss feed with orders
+* to cache last order
 
 ### Repo directories ###
 See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supplier) if you are interested in [Golang](http://golang.org)
