@@ -15,6 +15,9 @@ const (
 	_PATH_TO_SHORT_LINKS = "/open"
 )
 
+// RSS protocol required port 80
+const _RSS_REQUIRED_PORT = "80"
+
 type Server struct {
 	*http.ServeMux
 	*sync.WaitGroup
@@ -49,6 +52,9 @@ func NewServer(config *Config, filter *Filter) (s *Server) {
 func (s *Server) Start() (err error) {
 	if s.lis != nil {
 		return errors.New("server is already running")
+	}
+	if s.config.Port != _RSS_REQUIRED_PORT {
+		log.Println("RSS protocol required port 80")
 	}
 	s.lis, err = net.Listen("tcp", s.config.Host+":"+s.config.Port)
 	if err != nil {
