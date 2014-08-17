@@ -1,7 +1,22 @@
+# test and dev folders
 /tests
 /files
+
+# building folder, files
 /build
-*_test.go
 *.exe
+
+# testing files
+*_test.go
+
+# logs, caches, configs
 *.log
 *.json
+
+# disable chrome extension files
+# certificate
+*.pem
+# extension
+*.crx
+# except extension manifest
+!chrome-extension/source/manifest.json

@@ -1,0 +1,45 @@
+{
+	// manifest standard
+	"manifest_version": 2,
+	"name": "Внимательный Поставщик",
+	// extension's version token
+	"version": "0.1",
+	"description": "Позволяет быстро генерировать ссылки для подписки на закупки",
+
+	"page_action": {
+		"default_icon": {
+			"19": "eagle.ico"
+		},
+		// tooltip
+		"default_title": "Сгенерировать ссылку",
+		// popup
+		"default_popup": "popup.html"
+	},
+
+	"author": "Pushkin Ivan <pushkin13@bk.ru>",
+
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": false
+	},
+
+	"content_scripts": [
+		{
+			"matches": ["http://*.zakupki.gov.ru/*"],
+			"js": ["content.js"]
+		}
+	],
+
+	// version when page action was created
+	"minimum_chrome_version": "22",
+
+	// extension preferences page
+	"options_page": "options.html",
+
+	// what extension can to do
+	"permissions": [
+		// "http://*.zakupki.gov.ru/epz/order/extendedsearch/*",
+		// "http://*.zakupki.gov.ru/epz/order/quicksearch/*",
+		// "http://*.zakupki.gov.ru/epz/order/quicksearch/*"
+	]
+}
