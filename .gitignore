@@ -1,16 +1,10 @@
-# building folder, files
-/build
+# Common
 *.exe
-
-# testing files and folder
-/tests
 *_test.go
-
-# logs, caches, configs, filters
 *.log
 *.json
 
-# disable chrome extension files
+# Chrome extension files
 # certificate
 *.pem
 # extension
