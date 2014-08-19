@@ -29,9 +29,8 @@ See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supp
 #!
 ./browser-extensions - contains extensions for url generation
 ./docs               - contains html documentation
-./files              - contains icons, manifests and others
-./golang             - contains .go files
-./urls               - contains gui url generator source files
+./src                - contains icons, manifests and other
+./go-source          - contains .go source files
 ```
 
 ### Compilation ###
