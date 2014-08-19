@@ -16,7 +16,7 @@ const (
 )
 
 const (
-	_PROG_ICON_FILE_NAME        = "eagle.ico"
+	_PROG_ICON_FILE_NAME        = "src/eagle.ico"
 	_PROG_DESCRIPTION_FILE_NAME = "docs/index.html"
 )
 
@@ -340,9 +340,7 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	})
 
 	openURLGenAction.Triggered().Attach(func() {
-		err = exec.Command(
-			"urls/urls",
-		).Start()
+		err = exec.Command("urls").Start()
 		if err != nil {
 			log.Println("cannot open url generator:", err)
 		}

@@ -27,17 +27,19 @@ See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supp
 
 ```
 #!
-./     - contains ru-supplier source files
-./docs - contains html documentation files
-./urls - contains url generator source files
+./browser-extensions - contains extensions for url generation
+./docs               - contains html documentation
+./files              - contains icons, manifests and others
+./golang             - contains .go files
+./urls               - contains gui url generator source files
 ```
 
 ### Compilation ###
 
 You have to download and install:
-* Golang compiler from [here](http://golang.org/doc/install)
-* Git from [here](http://git-scm.com/downloads)
-* Mercurial from [here](http://mercurial.selenic.com/wiki/Download)
+* [Golang compiler](http://golang.org/doc/install).You have to set up %GOPATH% env variable (something like this C:\gocode)
+* [Git](http://git-scm.com/downloads). You have to install console cmd git version
+* [Mercurial](http://mercurial.selenic.com/wiki/Download)
 
 Then download this repo.
 
@@ -54,6 +56,6 @@ After compilation you have to create local host in hosts file.
 2. do any request
 3. copy request url
 4. convert request url into rss feed link by url generator
-5. run ru-supplier
+5. run ru-supplier (proxy)
 6. open your rss client
-7. subscribe to rss feed
+7. subscribe to the rss feed

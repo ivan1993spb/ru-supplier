@@ -13,8 +13,8 @@
 :: Printing Programm name, author, licence
 ::
 echo RU-SUPPLIER & echo.
-echo Author: Pushkin Ivan (pushkin13@bk.ru)
-type LICENSE & echo.
+echo Author: Pushkin Ivan (pushkin13@bk.ru) & echo.
+type LICENSE & echo. & echo.
 
 ::
 :: Checking compiler
@@ -26,123 +26,128 @@ if %ERRORLEVEL% NEQ 0 (
 	echo Please install Golang
 	goto :end
 )
-echo Compiler exists
-if "%GOPATH%" == "" (
-	echo Please define GOPATH variable
-	goto :end
-)
-echo GOPATH is set up
+echo Compiler... ok
 
 ::
 :: Checking environment
 ::
 echo Checking environment...
+if "%GOPATH%" == "" (
+	echo Please define GOPATH env variable
+	goto :end
+)
+echo GOPATH: (%GOPATH%) ... ok
 where /Q hg
 if %ERRORLEVEL% NEQ 0 (
 	echo Error: mercurial was not found
 	echo Please install mercurial
 	goto :end
 )
-echo mercurial... exists
+echo mercurial... ok
 where /Q git
 if %ERRORLEVEL% NEQ 0 (
 	echo Error: git was not found
-	echo Please install git and create git in PATH
+	echo Please install git command line tool
 	goto :end
 )
-echo git... exists
+echo git... ok
+
+::
+:: Checking source directories
+::
+echo Checking source directories...
+if not exist go-source\ru-supplier (
+	echo not found source folder go-source\ru-supplier
+	goto :end
+)
+if not exist go-source\urls (
+	echo not found source folder go-source\urls
+	goto :end
+)
+if not exist docs (
+	echo not found folder docs
+	goto :end
+)
+if not exist src (
+	echo not found folder src
+	goto :end
+)
+echo Source directories... ok
 
 ::
 :: Checking packages
 ::
-echo Checking packages
+echo Checking packages...
 
 if not exist "%GOPATH%\src\code.google.com/p/go-charset/charset" (
-	echo Golang package code.google.com/p/go-charset/charset was not found
 	echo Downloading package code.google.com/p/go-charset/charset...
 	go get code.google.com/p/go-charset/charset
 )
-echo Package code.google.com/p/go-charset/charset... exists
+echo Package code.google.com/p/go-charset/charset... ok
 
 if not exist "%GOPATH%\src\code.google.com/p/go-charset/data" (
-	echo Golang package code.google.com/p/go-charset/data was not found
 	echo Downloading package code.google.com/p/go-charset/data...
 	go get code.google.com/p/go-charset/data
 )
-echo Package code.google.com/p/go-charset/data... exists
+echo Package code.google.com/p/go-charset/data... ok
 
 if not exist "%GOPATH%\src\github.com/gorilla/feeds" (
-	echo Golang package github.com/gorilla/feeds was not found
 	echo Downloading package github.com/gorilla/feeds...
 	go get github.com/gorilla/feeds
 )
-echo Package github.com/gorilla/feeds... exists
+echo Package github.com/gorilla/feeds... ok
 
 if not exist "%GOPATH%\src\github.com/lxn/walk" (
-	echo Golang package github.com/lxn/walk was not found
 	echo Downloading package github.com/lxn/walk...
 	go get github.com/lxn/walk
 )
-echo Package github.com/lxn/walk... exists
+echo Package github.com/lxn/walk... ok
 
 :: inform that that's ok
-echo Your system is ready to compile program
+echo ---------------------------------------& echo.
+echo Your system is ready to compile program & echo.
+echo ---------------------------------------& echo.
 
 ::
-:: Making directories and copy docs
-::
-echo Making directory tree
-if exist build (
-	rd /q /s build
-)
-md build
-md build\urls
-md build\docs
-xcopy /s docs build\docs
-
-::
-:: Programm compilation and prog files coping
+:: Compilation of ru-supplier
 ::
 echo Compilation of ru-supplier...
-copy eagle.ico build
-copy LICENSE build
-copy README.md build
-copy rsrc.syso build
-copy ru-supplier.manifest build
+copy src\common.manifest go-source\ru-supplier\ru-supplier.manifest
+copy src\rsrc.syso go-source\ru-supplier
+cd go-source\ru-supplier
 echo Please wait...
 go build -ldflags="-H windowsgui"
 if %ERRORLEVEL% NEQ 0 (
 	echo Compilation error: check golang version and .go files
 	goto :end
 )
-for %%* in (.) do set CurrDirName=%%~n*
-if "%CurrDirName%" NEQ "ru-supplier" (
-	:: rename
-	move %CurrDirName%.exe ru-supplier.exe
-)
-move ru-supplier.exe build
+del ru-supplier.manifest
+del rsrc.syso
+move ru-supplier.exe ..\..
+cd ..\..
 
 ::
 :: Compilation of url-generator
 ::
 echo Compilation of url-generator...
-copy urls\rsrc.syso build\urls
-copy urls\urls.manifest build\urls
-cd urls
+copy src\common.manifest go-source\urls\urls.manifest
+copy src\rsrc.syso go-source\urls
+cd go-source\urls
 echo Please wait...
 go build -ldflags="-H windowsgui"
 if %ERRORLEVEL% NEQ 0 (
-	echo Compilation error: check url/*.go files
+	echo Compilation error: check golang version and .go files
 	goto :end
 )
-cd ..
-move urls\urls.exe build\urls
+del urls.manifest
+del rsrc.syso
+move urls.exe ..\..
+cd ..\..
 
 ::
 :: Finalizing
 ::
-echo RU-SUPPLIER successfully installed in: %CD%\build\
-start build
+echo RU-SUPPLIER successfully compiled
 
 ::
 :: End builder.bat file

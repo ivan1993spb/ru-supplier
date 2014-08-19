@@ -1,15 +1,12 @@
-# test and dev folders
-/tests
-/files
-
 # building folder, files
 /build
 *.exe
 
-# testing files
+# testing files and folder
+/tests
 *_test.go
 
-# logs, caches, configs
+# logs, caches, configs, filters
 *.log
 *.json
 
@@ -19,4 +16,4 @@
 # extension
 *.crx
 # except extension manifest
-!chrome-extension/source/manifest.json
+!browser-extensions/chrome/source/manifest.json

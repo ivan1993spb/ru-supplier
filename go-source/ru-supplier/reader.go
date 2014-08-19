@@ -53,6 +53,10 @@ func (p *OrderReader) ReadOrders(resp *http.Response) ([]*Order, error) {
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
+	// There is no orders. Empty result
+	if len(newestChunk) == 0 && err == io.EOF {
+		return nil, nil
+	}
 	if newestChunk[len(newestChunk)-1] == '\n' {
 		// cut delim \n if there is
 		newestChunk = newestChunk[:len(newestChunk)-1]
@@ -81,7 +85,7 @@ func (p *OrderReader) ReadOrders(resp *http.Response) ([]*Order, error) {
 	if order, err := ParseOrder(newestChunk); err == nil {
 		orders = append(orders, order)
 	} else {
-		return nil, err
+		log.Println("parsing order error:", err)
 	}
 
 	// if exists checking chunk read while does not find matched chunk
@@ -102,7 +106,7 @@ func (p *OrderReader) ReadOrders(resp *http.Response) ([]*Order, error) {
 		if order, err := ParseOrder(rowData); err == nil {
 			orders = append(orders, order)
 		} else {
-			return orders, err
+			log.Println("parsing order error:", err)
 		}
 		if err == io.EOF {
 			break
