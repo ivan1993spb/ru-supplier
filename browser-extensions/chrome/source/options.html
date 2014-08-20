@@ -4,27 +4,34 @@
 		<meta charset="utf-8">
 		<title>Настроки Внимательного Поставщика</title>
 		<style type="text/css">
-			div {
-				width: 300px;
-			}
-			input {
-				float: right;
-			}
+			body { margin: 50px; }
+			td { padding: 10px 60px 10px 0px; }
+			table { margin: 30px 0px; }
 		</style>
+		<script type="text/javascript" src="preferences.js"></script>
 	</head>
 	<body>
 		<h1>Настроки Внимательного Поставщика</h1>
 		<h3>Использовать для генерации ссылок:</h3>
-		<div>
-			<div><label>Хост</label></div>
-			<div><input></div>
-		</div>
-		<div>
-			<label>
-				Порт
-				<input>
-			</label>
-		</div>
+		<table>
+			<tr>
+				<td><label for="textHost">Хост</label></td>
+				<td><input type="text" id="textHost"></td>
+			</tr>
+			<tr>
+				<td><label for="textPort">Порт</label></td>
+				<td><input type="text" id="textPort"></td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<input type="checkbox" id="checkboxUseCustomPort">
+					<label for="checkboxUseCustomPort">Исползовать нестандартный порт</label>
+				</td>
+			</tr>
+		</table>
+		<button onclick="">По умолчанию</button>
+		<button onclick="">Вернуть</button>
+		<button onclick="">Сохранить</button>
 		<script type="text/javascript">
 			(function(){
 
