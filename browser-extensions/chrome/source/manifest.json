@@ -38,6 +38,7 @@
 
 	// what extension can to do
 	"permissions": [
+		//"storage"
 		// "http://*.zakupki.gov.ru/epz/order/extendedsearch/*",
 		// "http://*.zakupki.gov.ru/epz/order/quicksearch/*",
 		// "http://*.zakupki.gov.ru/epz/order/quicksearch/*"
