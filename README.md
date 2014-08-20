@@ -28,7 +28,7 @@ See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supp
 ```
 #!
 ./browser-extensions - contains extensions for url generation
-./docs               - contains html documentation
+./docs               - contains russian documentation
 ./src                - contains icons, manifests and other
 ./go-source          - contains .go source files
 ```
@@ -36,8 +36,9 @@ See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supp
 ### Compilation ###
 
 You have to download and install:
-* [Golang compiler](http://golang.org/doc/install).You have to set up %GOPATH% env variable (something like this C:\gocode)
-* [Git](http://git-scm.com/downloads). You have to install console cmd git version
+
+* Golang [Golang compiler](http://golang.org/doc/install).You have to set up %GOPATH% env variable (something like this C:\gocode)
+* [Git](http://git-scm.com/downloads). You have to install console git version
 * [Mercurial](http://mercurial.selenic.com/wiki/Download)
 
 Then download this repo.
@@ -45,9 +46,9 @@ Then download this repo.
 ```
 #!
 C:\> cd path-to-ru-supplier
-C:\path-to-ru-supplier> builder.bat
+C:\path-to-ru-supplier> make.bat
 ```
-Then will be created and opened directory with program files.
+
 After compilation you have to create local host in hosts file.
 
 ### How it works ###
