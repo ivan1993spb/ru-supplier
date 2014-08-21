@@ -3,9 +3,34 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Внимательный Поставщик</title>
+		<style type="text/css" src="popup.js"></style>
+		<style type="text/css">
+			body {
+				background-color: #eee;
+				margin: 5px;
+			}
+			a, input {
+				display: block;
+				margin: 3px;
+
+			}
+			input {
+				width: 320px;
+			}
+			a {
+				text-align: right;
+				font: 10pt Arial;
+				color: #337;
+				cursor: pointer;
+			}
+			a:hover {
+				color: #66a;
+				text-decoration: underline;
+			}
+		</style>
 	</head>
 	<body>
-		<div><input type="text"></div>
-		<div>Hello world</div>
+		<input id="inputLink" type="text" disabled="1">
+		<a id="copyButton">Копировать</a>
 	</body>
 </html>
