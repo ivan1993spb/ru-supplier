@@ -1,12 +1,26 @@
 if (preferences != undefined) {
 
 	function UpdatePortInputs() {
-		if (document.getElementById('textPort').value == '80') {
-			document.getElementById('textPort').disabled = 1;
+		if (document.getElementById('textPort').value == preferences.default.Port) {
+			document.getElementById('textPort').disabled = true;
 			document.getElementById('checkboxUseCustomPort').checked = false;
 		} else {
-			document.getElementById('textPort').disabled = 0;
+			document.getElementById('textPort').disabled = false;
 			document.getElementById('checkboxUseCustomPort').checked = true;
+		}
+	}
+
+	function EnableSaveButton() {
+		var button = document.getElementById('savePreferences');
+		if (button.disabled) {
+			button.disabled = false;
+		}
+	}
+
+	function DisableSaveButton() {
+		var button = document.getElementById('savePreferences');
+		if (!button.disabled) {
+			button.disabled = true;
 		}
 	}
 
@@ -15,6 +29,7 @@ if (preferences != undefined) {
 		document.getElementById('textPort').value = preferences.default.Port;
 
 		UpdatePortInputs();
+		EnableSaveButton();
 	}
 
 	function RestoreLast() {
@@ -56,20 +71,26 @@ if (preferences != undefined) {
 		});
 
 		document.getElementById('checkboxUseCustomPort').addEventListener('click', function(){
-			if (!this.checked) {
-				document.getElementById('textPort').value = preferences.default.Port;
+			if (this.checked) {
 				document.getElementById('textPort').value = '';
+				document.getElementById('textPort').focus();
+			} else {
+				document.getElementById('textPort').value = preferences.default.Port;
 			}
 			UpdatePortInputs();
 		});
 
 		document.getElementById('savePreferences').addEventListener('click', function(){
 			Save();
+			DisableSaveButton();
 		});
 
-		document.getElementById('textPort').addEventListener('onchange', function(){
+		document.getElementById('textHost').addEventListener('change', EnableSaveButton, false);
+
+		document.getElementById('textPort').addEventListener('change', function() {
 			UpdatePortInputs();
-		});
+			EnableSaveButton();
+		}, false);
 
 	});
 
