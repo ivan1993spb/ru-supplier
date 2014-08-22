@@ -9,21 +9,7 @@
 			table { margin: 30px 0px; }
 		</style>
 		<script type="text/javascript" src="preferences.js"></script>
-		<script type="text/javascript">
-			// function RestoreDefaults() {
-			// 	preferences.get(function(items){
-			// 		document.getElementById('textHost').value = items.Host;
-			// 		document.getElementById('textPort').value = items.Port;
-			// 		document.getElementById('checkboxUseCustomPort') = false;
-			// 	});
-			// }
-			// function RestoreLast() {
-
-			// }
-			// function Save() {
-			// 	console.log(document.getElementById('checkboxUseCustomPort').checked)
-			// }
-		</script>
+		<script type="text/javascript" src="options.js"></script>
 	</head>
 	<body>
 		<h1>Настроки Внимательного Поставщика</h1>
@@ -44,13 +30,8 @@
 				</td>
 			</tr>
 		</table>
-		<button onclick="RestoreDefaults()">По умолчанию</button>
-		<button onclick="">Вернуть</button>
-		<button onclick="Save()">Сохранить</button>
-		<script type="text/javascript">
-			// (function(){
-
-			// })();
-		</script>
+		<button id="restoreDefaults">По умолчанию</button>
+		<button id="restoreLast">Вернуть</button>
+		<button id="savePreferences">Сохранить</button>
 	</body>
 </html>
