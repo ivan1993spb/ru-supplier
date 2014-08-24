@@ -20,6 +20,7 @@ const (
 const (
 	_URL_REQUIRED_SCHEME               = "http"
 	_URL_REQUIRED_HOST                 = "zakupki.gov.ru"
+	_URL_REQUIRED_ALIAS_HOST           = "www.zakupki.gov.ru"
 	_URL_REQUIRED_SORTING_TYPE         = "PUBLISH_DATE"
 	_URL_REQUIRED_SORTING_DIRECTION    = "false"
 	_URL_REQUIRED_QUICK_SEARCH_PATH    = "/epz/order/orderCsvSettings/quickSearch/download.html"
@@ -92,7 +93,9 @@ func gen(URL *url.URL, host string) *url.URL {
 		return nil
 	}
 	if URL.Host != _URL_REQUIRED_HOST {
-		return nil
+		if URL.Host != _URL_REQUIRED_ALIAS_HOST {
+			return nil
+		}
 	}
 	if path, ok := Paths[URL.Path]; ok {
 		URL.Path = path

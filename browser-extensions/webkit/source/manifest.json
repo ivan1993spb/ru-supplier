@@ -3,7 +3,7 @@
 	"manifest_version": 2,
 	"name": "Внимательный Поставщик",
 	// extension's version token
-	"version": "0.5",
+	"version": "1.0",
 	"description": "Позволяет генерировать ссылки для подписки на закупки",
 
 	"page_action": {
@@ -11,7 +11,7 @@
 			"19": "eagle.ico"
 		},
 		// tooltip
-		"default_title": "Сгенерировать ссылку",
+		"default_title": "Генерировать ссылку",
 		// popup
 		"default_popup": "popup.html"
 	},
@@ -31,7 +31,9 @@
 
 	// what extension can to do
 	"permissions": [
+		"tabs",
 		"storage",
-		"webNavigation"
+		"webNavigation",
+		"clipboardWrite"
 	]
 }

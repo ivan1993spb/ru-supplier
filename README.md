@@ -37,7 +37,7 @@ See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supp
 
 You have to download and install:
 
-* Golang [Golang compiler](http://golang.org/doc/install).You have to set up %GOPATH% env variable (something like this C:\gocode)
+* Golang [Golang compiler](http://golang.org/doc/install). You have to set up %GOPATH% env variable (something like this C:\gocode)
 * [Git](http://git-scm.com/downloads). You have to install console git version
 * [Mercurial](http://mercurial.selenic.com/wiki/Download)
 
@@ -54,8 +54,7 @@ After compilation you have to create local host in hosts file.
 ### How it works ###
 1. go to the [http://zakupki.gov.ru](http://zakupki.gov.ru)
 2. do any request
-3. copy request url
-4. convert request url into rss feed link by url generator
-5. run ru-supplier (proxy)
-6. open your rss client
-7. subscribe to the rss feed
+3. convert request url into rss feed link by browser extension
+4. run ru-supplier
+5. open your rss client
+6. subscribe to the rss feed

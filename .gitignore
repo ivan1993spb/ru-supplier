@@ -4,10 +4,11 @@
 *.log
 *.json
 
-# Chrome extension files
-# certificate
+# Extension files
+# certificates
 *.pem
-# extension
+# extensions
 *.crx
-# except extension manifest
-!browser-extensions/chrome/source/manifest.json
+*.nex
+# except extension manifests
+!browser-extensions/**/manifest.json
