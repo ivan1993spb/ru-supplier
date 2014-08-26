@@ -93,16 +93,68 @@ type Order struct {
 }
 
 func ParseOrder(rowBytes []byte) (*Order, error) {
-	var row [_ORDER_COLUMN_COUNT]string
+	if len(rowBytes) == 0 {
+		return nil, errors.New("Passed empty bytes row")
+	}
 
-	for i := 0; i < _ORDER_COLUMN_COUNT; i++ {
-		if m := bytes.IndexByte(rowBytes, ';'); m > -1 {
-			row[i] = string(bytes.TrimSpace(rowBytes[:m]))
-			rowBytes = rowBytes[m+1:]
-		} else if i == _ORDER_COLUMN_COUNT-1 {
-			row[i] = string(bytes.TrimSpace(rowBytes))
-		} else {
-			return nil, errors.New("ParseOrder: invalid column count")
+	var (
+		// Array of order fields
+		row   [_ORDER_COLUMN_COUNT]string
+		field int // index of current order field
+
+		block  []byte // block
+		quoted bool   // true if current block is quoted
+
+		// Tokenes:
+		//     i is index of `;`
+		//     j is index of `"`
+		//     k is index of `""`
+		i, j, k int
+
+		l int // parser position in rowBytes
+	)
+
+	for {
+		i = bytes.IndexByte(rowBytes[l:], ';')
+		j = bytes.IndexByte(rowBytes[l:], '"')
+		k = bytes.Index(rowBytes[l:], []byte{'"', '"'})
+
+		if (i > -1) && (i < j || j < 0) && (i < k || k < 0) {
+			// next token is `;`
+			if quoted {
+				// `;` is part of block
+				block = append(block, rowBytes[l:i+1]...)
+			} else {
+				// `;` is separator
+				block = append(block, rowBytes[l:i]...)
+				// write block
+				row[field] = string(block)
+				field++
+			}
+			l += i + 1
+
+		} else if (j > -1) && (j < i || i < 0) && (j < k || k < 0) {
+			// next token is `"`
+			if quoted {
+				block = append(block, rowBytes[l:j]...)
+				row[field] = string(block)
+				field++
+			}
+			l += j + 1
+			quoted = !quoted
+
+		} else if quoted && (k > -1) && (k < i || i < 0) && k == j {
+			// next token is `""`
+			block = append(block, rowBytes[l:k]...)
+			// append only one double quote
+			block = append(block, '"')
+			l += k + 2
+			row[field] = string(block)
+			field++
+
+		} else if i < 0 && j < 0 && k < 0 {
+			block = append(block, rowBytes[l:])
+
 		}
 	}
 
