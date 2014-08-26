@@ -161,6 +161,96 @@ func ParseOrder(rowBytes []byte) (*Order, error) {
 	return NewOrder(row), nil
 }
 
+func ParseOrder2(rowBytes []byte) {
+	if len(rowBytes) == 0 {
+		fmt.Println("empty")
+	}
+
+	var (
+		// Array of order fields
+		// row   [_ORDER_COLUMN_COUNT]string
+		// field int // index of current order field
+
+		block  []byte // block
+		quoted bool   // true if current block is quoted
+		inside = true
+
+		l int // parser cursor
+
+		// Tokenes:
+		//     l+i is current index of `;`
+		//     l+j is current index of `"`
+		//     l+k is current index of `""`
+		i, j, k int
+	)
+
+	for l < len(rowBytes) {
+		i = bytes.IndexByte(rowBytes[l:], ';')
+		j = bytes.IndexByte(rowBytes[l:], '"')
+		k = bytes.Index(rowBytes[l:], []byte{'"', '"'})
+
+		if (i > -1) && (i < j || j < 0) && (i < k || k < 0) {
+			// next token is `;`
+			if quoted {
+				// `;` is part of block
+				block = append(block, rowBytes[l:l+i+1]...)
+			} else {
+				// `;` is separator
+				block = append(block, rowBytes[l:l+i]...)
+				// close block
+				inside = false
+			}
+			l += i + 1
+
+		} else if (j > -1) && (j < i || i < 0) && (j < k || k < 0 || !quoted) {
+			// next token is `"`
+			// if field are quoted
+			if quoted {
+				block = append(block, rowBytes[l:l+j]...)
+				// ignore all bytes before next seporator `;`
+				if i > j {
+					j = i
+				}
+				// close block
+				inside = false // ????????
+			}
+			l += j + 1
+			quoted = !quoted
+
+		} else if quoted && (k > -1) && (k < i || i < 0) && k == j {
+			// next token is `""`
+			// append only one double quote
+			block = append(block, rowBytes[l:l+k+1]...)
+			// but skip two
+			l += k + 2
+			continue
+
+		} else if i < 0 && j < 0 && k < 0 {
+			if quoted {
+				fmt.Println("error")
+				break
+			}
+			if inside {
+				block = append(block, rowBytes[l:]...)
+				inside = false
+			} else {
+				fmt.Println("err 2")
+			}
+			//fmt.Println("4:", string())
+			// block = append(block, rowBytes[l:])
+			l = len(rowBytes)
+		}
+
+		if !inside {
+			// fmt.Println(inside)
+			fmt.Printf("%q\n", block)
+			block = block[:0]
+			inside = true
+		}
+		// fmt.Println(inside)
+	}
+}
+
 func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
 	order = &Order{
 		OrderId:          strings.TrimLeft(row[_FIELD_ORDER_ID], "№"),
