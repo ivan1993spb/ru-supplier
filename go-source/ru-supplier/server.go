@@ -102,20 +102,22 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("filtered %.1f%%\n", filtered*100)
 		}
 	}
-	var title string
 	if URL, err := url.Parse(r.Form.Get("url")); err == nil {
 		// call feed like search request
-		title = URL.Query().Get("searchString")
+		s.render.SetTitle(URL.Query().Get("searchString"))
 	}
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	if len(orders) > 0 {
-		s.render.Compose(title, orders)
+		s.render.Compose(orders)
 	}
 	if err := s.render.WriteTo(w); err != nil {
 		log.Println("can't send response:", err)
 	}
-	s.Done() // signal that request was processed
+	// clear feed
+	s.render.Clear()
+	// signal that request was processed
+	s.Done()
 }
 
 func (s *Server) ShortLinkHandler(w http.ResponseWriter, r *http.Request) {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"math"
 	"strconv"
@@ -94,9 +93,13 @@ type Order struct {
 
 const _CSV_FIELD_SEPARATOR = ';'
 
-func ParseOrder(rowBytes []byte) (*Order, error) {
+func ParseOrder(rowbyte []byte) (*Order, error) {
 	if len(rowbyte) == 0 {
 		return nil, errors.New("passed empty rowbyte")
+	}
+
+	if rowbyte[len(rowbyte)-1] == '\n' {
+		rowbyte = rowbyte[:len(rowbyte)-1]
 	}
 	rowbyte = append(rowbyte, ';')
 
@@ -153,6 +156,7 @@ func ParseOrder(rowBytes []byte) (*Order, error) {
 			return nil, errors.New("unexpected character")
 		}
 	}
+
 	if field < _ORDER_COLUMN_COUNT-1 {
 		return nil, errors.New("bad field count")
 	}

@@ -204,23 +204,29 @@ func NewRender(config *Config) *Render {
 	}
 }
 
-func (r *Render) Compose(title string, orders []*Order) {
+func (r *Render) SetTitle(title string) {
 	if len(title) == 0 {
 		r.feed.Title = _DEFAULT_TITLE
 	} else {
 		r.feed.Title = title
 	}
-	r.feed.Items = make([]*feeds.RssItem, len(orders))
-	for i, order := range orders {
-		r.feed.Items[i] = &feeds.RssItem{
-			Title: MakeTitle(order),
-			Link: MakeShortLink(
-				order.OrderId,
-				r.config.HTTPHost(),
-			),
-			Description: MakeDescription(order),
-			Author:      order.OrganisationName,
-			PubDate:     order.PubDate.Format(time.RFC1123),
+}
+
+func (r *Render) Compose(orders []*Order) {
+	r.feed.Items = r.feed.Items[:0]
+	if len(orders) > 0 {
+		r.feed.Items = make([]*feeds.RssItem, len(orders))
+		for i, order := range orders {
+			r.feed.Items[i] = &feeds.RssItem{
+				Title: MakeTitle(order),
+				Link: MakeShortLink(
+					order.OrderId,
+					r.config.HTTPHost(),
+				),
+				Description: MakeDescription(order),
+				Author:      order.OrganisationName,
+				PubDate:     order.PubDate.Format(time.RFC1123),
+			}
 		}
 	}
 }
@@ -229,11 +235,12 @@ func (r *Render) WriteTo(w io.Writer) error {
 	if _, err := io.WriteString(w, xml.Header); err != nil {
 		return err
 	}
-	// clear feed
-	defer func() {
-		r.feed.Title = _DEFAULT_TITLE
-		r.feed.Items = nil
-	}()
+	defer r.Clear()
 	// write data
 	return xml.NewEncoder(w).Encode(r.feed.FeedXml())
+}
+
+func (r *Render) Clear() {
+	r.feed.Title = _DEFAULT_TITLE
+	r.feed.Items = r.feed.Items[:0]
 }
