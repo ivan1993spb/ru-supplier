@@ -92,163 +92,71 @@ type Order struct {
 	Errors           []error   // Ошибки при анализе закупки
 }
 
+const _CSV_FIELD_SEPARATOR = ';'
+
 func ParseOrder(rowBytes []byte) (*Order, error) {
-	if len(rowBytes) == 0 {
-		return nil, errors.New("Passed empty bytes row")
+	if len(rowbyte) == 0 {
+		return nil, errors.New("passed empty rowbyte")
 	}
+	rowbyte = append(rowbyte, ';')
 
 	var (
-		// Array of order fields
-		row   [_ORDER_COLUMN_COUNT]string
-		field int // index of current order field
+		row   [_ORDER_COLUMN_COUNT]string // array of order fields
+		field int                         // index of current field
 
-		block  []byte // block
+		buff   []byte // current block
+		allow  = true // true if character is expected
 		quoted bool   // true if current block is quoted
-
-		// Tokenes:
-		//     i is index of `;`
-		//     j is index of `"`
-		//     k is index of `""`
-		i, j, k int
-
-		l int // parser position in rowBytes
 	)
 
-	for {
-		i = bytes.IndexByte(rowBytes[l:], ';')
-		j = bytes.IndexByte(rowBytes[l:], '"')
-		k = bytes.Index(rowBytes[l:], []byte{'"', '"'})
-
-		if (i > -1) && (i < j || j < 0) && (i < k || k < 0) {
-			// next token is `;`
+	for i := 0; i < len(rowbyte) && field < _ORDER_COLUMN_COUNT; i++ {
+		if rowbyte[i] == _CSV_FIELD_SEPARATOR {
 			if quoted {
-				// `;` is part of block
-				block = append(block, rowBytes[l:i+1]...)
+				// quoted separator is part of field
+				buff = append(buff, rowbyte[i])
 			} else {
-				// `;` is separator
-				block = append(block, rowBytes[l:i]...)
-				// write block
-				row[field] = string(block)
+				// separator is end of string
+				// save
+				row[field] = string(buff)
 				field++
+				// remove
+				buff = buff[:0]
+				allow = true
 			}
-			l += i + 1
-
-		} else if (j > -1) && (j < i || i < 0) && (j < k || k < 0) {
-			// next token is `"`
-			if quoted {
-				block = append(block, rowBytes[l:j]...)
-				row[field] = string(block)
-				field++
-			}
-			l += j + 1
-			quoted = !quoted
-
-		} else if quoted && (k > -1) && (k < i || i < 0) && k == j {
-			// next token is `""`
-			block = append(block, rowBytes[l:k]...)
-			// append only one double quote
-			block = append(block, '"')
-			l += k + 2
-			row[field] = string(block)
-			field++
-
-		} else if i < 0 && j < 0 && k < 0 {
-			block = append(block, rowBytes[l:])
-
-		}
-	}
-
-	return NewOrder(row), nil
-}
-
-func ParseOrder2(rowBytes []byte) {
-	if len(rowBytes) == 0 {
-		fmt.Println("empty")
-	}
-
-	var (
-		// Array of order fields
-		// row   [_ORDER_COLUMN_COUNT]string
-		// field int // index of current order field
-
-		block  []byte // block
-		quoted bool   // true if current block is quoted
-		inside = true
-
-		l int // parser cursor
-
-		// Tokenes:
-		//     l+i is current index of `;`
-		//     l+j is current index of `"`
-		//     l+k is current index of `""`
-		i, j, k int
-	)
-
-	for l < len(rowBytes) {
-		i = bytes.IndexByte(rowBytes[l:], ';')
-		j = bytes.IndexByte(rowBytes[l:], '"')
-		k = bytes.Index(rowBytes[l:], []byte{'"', '"'})
-
-		if (i > -1) && (i < j || j < 0) && (i < k || k < 0) {
-			// next token is `;`
-			if quoted {
-				// `;` is part of block
-				block = append(block, rowBytes[l:l+i+1]...)
-			} else {
-				// `;` is separator
-				block = append(block, rowBytes[l:l+i]...)
-				// close block
-				inside = false
-			}
-			l += i + 1
-
-		} else if (j > -1) && (j < i || i < 0) && (j < k || k < 0 || !quoted) {
-			// next token is `"`
-			// if field are quoted
-			if quoted {
-				block = append(block, rowBytes[l:l+j]...)
-				// ignore all bytes before next seporator `;`
-				if i > j {
-					j = i
+		} else if allow {
+			if rowbyte[i] == '"' {
+				if quoted {
+					if i+1 < len(rowbyte) && rowbyte[i+1] == '"' {
+						// append only one double quote
+						buff = append(buff, '"')
+						// skip second quote
+						i += 1
+					} else {
+						// closing quote
+						quoted = false
+						allow = false
+					}
+				} else if len(buff) == 0 {
+					// new quoted field
+					// opening quote
+					quoted = true
+				} else {
+					// quote inside unquoted field
+					return nil, errors.New("unexpected quote")
 				}
-				// close block
-				inside = false // ????????
-			}
-			l += j + 1
-			quoted = !quoted
-
-		} else if quoted && (k > -1) && (k < i || i < 0) && k == j {
-			// next token is `""`
-			// append only one double quote
-			block = append(block, rowBytes[l:l+k+1]...)
-			// but skip two
-			l += k + 2
-			continue
-
-		} else if i < 0 && j < 0 && k < 0 {
-			if quoted {
-				fmt.Println("error")
-				break
-			}
-			if inside {
-				block = append(block, rowBytes[l:]...)
-				inside = false
 			} else {
-				fmt.Println("err 2")
+				// append eny char
+				buff = append(buff, rowbyte[i])
 			}
-			//fmt.Println("4:", string())
-			// block = append(block, rowBytes[l:])
-			l = len(rowBytes)
+		} else {
+			// block is closed
+			return nil, errors.New("unexpected character")
 		}
-
-		if !inside {
-			// fmt.Println(inside)
-			fmt.Printf("%q\n", block)
-			block = block[:0]
-			inside = true
-		}
-		// fmt.Println(inside)
 	}
+	if field < _ORDER_COLUMN_COUNT-1 {
+		return nil, errors.New("bad field count")
+	}
+	return NewOrder(row), nil
 }
 
 func NewOrder(row [_ORDER_COLUMN_COUNT]string) (order *Order) {
