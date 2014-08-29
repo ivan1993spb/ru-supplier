@@ -98,8 +98,10 @@ func ParseOrder(rowbyte []byte) (*Order, error) {
 		return nil, errors.New("passed empty rowbyte")
 	}
 
-	if rowbyte[len(rowbyte)-1] == '\n' {
-		rowbyte = rowbyte[:len(rowbyte)-1]
+	for i := 0; i < len(rowbyte); i++ {
+		if rowbyte[i] == '\n' {
+			rowbyte = rowbyte[:i]
+		}
 	}
 	rowbyte = append(rowbyte, ';')
 
@@ -148,7 +150,7 @@ func ParseOrder(rowbyte []byte) (*Order, error) {
 					return nil, errors.New("unexpected quote")
 				}
 			} else {
-				// append eny char
+				// append any char
 				buff = append(buff, rowbyte[i])
 			}
 		} else {

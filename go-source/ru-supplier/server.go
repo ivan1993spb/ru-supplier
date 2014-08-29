@@ -71,7 +71,9 @@ func (s *Server) ShutDown() error {
 	if s.lis == nil {
 		return nil
 	}
-	defer func() { s.lis = nil }()
+	defer func() {
+		s.lis = nil
+	}()
 	return s.lis.Close()
 }
 
@@ -86,28 +88,37 @@ func (s *Server) IsRunning() bool {
 func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	s.Add(1) // signal that yet another request is processed
 	defer r.Body.Close()
+
 	var orders []*Order
+
 	if resp, err := Load(r.FormValue("url")); err != nil {
 		log.Println("loading error:", err)
 	} else {
 		defer resp.Body.Close()
-		orders, err = s.reader.ReadOrders(resp)
-		if err != nil && err != io.EOF {
-			log.Println("can't read or parse response: ", err)
+		if resp.StatusCode != 200 {
+			log.Println("server return status " + resp.Status)
+		} else {
+			orders, err = s.reader.ReadOrders(resp)
+			if err != nil && err != io.EOF {
+				log.Println("can't read or parse response: ", err)
+			}
 		}
 		log.Printf("loaded %d orders\n", len(orders))
-		if s.config.FilterEnabled && len(orders) > 0 {
+
+		if len(orders) > 0 && s.config.FilterEnabled {
 			var filtered float32
 			orders, filtered = s.filter.Execute(orders)
 			log.Printf("filtered %.1f%%\n", filtered*100)
 		}
 	}
+
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+
 	if URL, err := url.Parse(r.Form.Get("url")); err == nil {
 		// call feed like search request
 		s.render.SetTitle(URL.Query().Get("searchString"))
 	}
-	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
 	if len(orders) > 0 {
 		s.render.Compose(orders)
 	}
@@ -116,6 +127,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// clear feed
 	s.render.Clear()
+
 	// signal that request was processed
 	s.Done()
 }

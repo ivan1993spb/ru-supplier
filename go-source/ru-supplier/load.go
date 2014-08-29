@@ -96,16 +96,17 @@ func Load(rawurl string) (*http.Response, error) {
 			return nil, errors.New("invalid url path")
 		}
 	}
+
 	// param sortBy defines type of sorting
 	if URL.Query().Get("sortBy") != _URL_REQUIRED_SORTING_TYPE {
 		log.Println("result will not sorted by publish date!")
 	}
 	// param sortDirection defines sorting direction
-	// this app is useful if and only if orders will sorted descending
-	// by publish date!
 	if URL.Query().Get("sortDirection") != _URL_REQUIRED_SORTING_DIRECTION {
 		log.Println("invalid sorting direction!")
 	}
+	// This app is useful if and only if orders will sorted descending
+	// by publish date!
 
 	return http.DefaultClient.Do(&http.Request{
 		URL:   URL,
