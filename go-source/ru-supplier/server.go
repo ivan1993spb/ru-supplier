@@ -115,9 +115,11 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
-	if URL, err := url.Parse(r.Form.Get("url")); err == nil {
+	if URL, err := url.Parse(r.FormValue("url")); err == nil {
 		// call feed like search request
 		s.render.SetTitle(URL.Query().Get("searchString"))
+	} else {
+		log.Println("getting feed title error:", err)
 	}
 	if len(orders) > 0 {
 		s.render.Compose(orders)
