@@ -1,3 +1,4 @@
+// +build windows
 package main
 
 import (
@@ -18,6 +19,7 @@ const (
 const (
 	_PROG_ICON_FILE_NAME        = "src/eagle.ico"
 	_PROG_DESCRIPTION_FILE_NAME = "docs/index.html"
+	_PROG_URL_GENER_FILE_NAME   = "urls"
 )
 
 const (
@@ -340,7 +342,7 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	})
 
 	openURLGenAction.Triggered().Attach(func() {
-		err = exec.Command("urls").Start()
+		err = exec.Command(_PROG_URL_GENER_FILE_NAME).Start()
 		if err != nil {
 			log.Println("cannot open url generator:", err)
 		}
