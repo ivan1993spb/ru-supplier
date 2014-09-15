@@ -243,4 +243,5 @@ func (r *Render) WriteTo(w io.Writer) error {
 func (r *Render) Clear() {
 	r.feed.Title = _DEFAULT_TITLE
 	r.feed.Items = r.feed.Items[:0]
+	r.feed.Items = nil
 }
