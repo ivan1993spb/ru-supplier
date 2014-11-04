@@ -103,9 +103,11 @@ if not exist "%GOPATH%\src\github.com/lxn/walk" (
 )
 echo Package github.com/lxn/walk... ok
 
+echo.
+
 :: inform that that's ok
-echo ---------------------------------------& echo.
-echo Your system is ready to compile program & echo.
+echo ---------------------------------------
+echo Your system is ready to compile program
 echo ---------------------------------------& echo.
 
 ::
@@ -121,6 +123,8 @@ if %ERRORLEVEL% NEQ 0 (
 	echo Compilation error: check golang version and .go files
 	goto :end
 )
+echo Success!& echo.
+
 del ru-supplier.manifest
 del rsrc.syso
 move ru-supplier.exe ..\..
@@ -139,6 +143,8 @@ if %ERRORLEVEL% NEQ 0 (
 	echo Compilation error: check golang version and .go files
 	goto :end
 )
+echo Success!& echo.
+
 del urls.manifest
 del rsrc.syso
 move urls.exe ..\..
@@ -147,10 +153,15 @@ cd ..\..
 ::
 :: Finalizing
 ::
+echo.
+echo ---------------------------------
 echo RU-SUPPLIER successfully compiled
+echo ---------------------------------
+echo.
 
 ::
 :: End builder.bat file
 ::
 :end
+
 pause

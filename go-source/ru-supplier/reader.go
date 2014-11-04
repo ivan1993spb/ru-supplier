@@ -18,6 +18,11 @@ const (
 	_BUFFER_SIZE    = 1536
 )
 
+type OrderParserReader interface {
+	ReadOrders(*http.Response) ([]*Order, error)
+	RemoveCache() error
+}
+
 type OrderReader struct {
 	*HashStore
 }
@@ -26,24 +31,28 @@ func NewOrderReader() *OrderReader {
 	return &OrderReader{LoadHashStoreSimple()}
 }
 
-func (p *OrderReader) ReadOrders(resp *http.Response) ([]*Order, error) {
+func (p *OrderReader) ReadOrders(resp *http.Response) (
+	[]*Order, error) {
+
 	if resp == nil {
-		panic("parse(): passed nil response")
+		panic("ReadOrders(): passed nil response")
 	}
 	if resp.StatusCode != 200 {
-		return nil, errors.New("server return status " + resp.Status)
+		return nil, errors.New("Server return status " + resp.Status)
 	}
+
 	w1251rdr, err := charset.NewReader(_STREAM_CHARSET, resp.Body)
 	if err != nil {
 		return nil, err
 	}
 	brdr := bufio.NewReaderSize(w1251rdr, _BUFFER_SIZE)
+
 	// skip first line with topics
 	if _, err = brdr.ReadString('\n'); err != nil {
 		if err == io.EOF {
 			return nil, nil
 		}
-		return nil, errors.New("skip first line err: " + err.Error())
+		return nil, errors.New("Skip first line err: " + err.Error())
 	}
 
 	// Below get newest chunk from stream and checking chunk
@@ -78,14 +87,14 @@ func (p *OrderReader) ReadOrders(resp *http.Response) ([]*Order, error) {
 	// save newest chunk in cache
 	p.HashStore.SetHashChunk(rawurl, newestChunk)
 	if err = p.HashStore.Save(); err != nil {
-		log.Println("can't save cache:", err)
+		log.Println("Can't save cache:", err)
 	}
 
 	var orders []*Order
 	if order, err := ParseOrder(newestChunk); err == nil {
 		orders = append(orders, order)
 	} else {
-		log.Println("parsing order error:", err)
+		log.Println("Parsing order error:", err)
 	}
 
 	// if exists checking chunk read while does not find matched chunk
@@ -106,7 +115,7 @@ func (p *OrderReader) ReadOrders(resp *http.Response) ([]*Order, error) {
 		if order, err := ParseOrder(rowData); err == nil {
 			orders = append(orders, order)
 		} else {
-			log.Println("parsing order error:", err)
+			log.Println("Parsing order error:", err)
 		}
 		if err == io.EOF {
 			break

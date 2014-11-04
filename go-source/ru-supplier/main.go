@@ -22,32 +22,35 @@ func main() {
 		log.SetFlags(log.LstdFlags)
 		log.SetOutput(logfile)
 	}
+
 	config, err := LoadConfig(_CONFIG_FILE_NAME)
 	if config == nil {
 		if err != nil {
-			log.Fatal("cannot load configs:", err)
+			log.Fatal("Cannot load configs:", err)
 		} else {
-			panic("config object is nil")
+			panic("Config object is nil")
 		}
 	}
 	if err != nil {
-		log.Println("config:", err)
+		log.Println("Config:", err)
 	}
+
 	filter, err := LoadFilter(_FILTERS_FILE_NAME)
 	if filter == nil {
 		if err != nil {
-			log.Fatal("cannot load filters:", err)
+			log.Fatal("Cannot load filters:", err)
 		} else {
-			panic("filter object is nil")
+			panic("Filter object is nil")
 		}
 	}
 	if err != nil {
-		log.Println("filter:", err)
+		log.Println("Filter:", err)
 	}
+
 	if err = InterfaceStart(
 		NewServer(config, filter),
 		config,
 	); err != nil {
-		log.Fatal("interface fatal error:", err)
+		log.Fatal("Interface fatal error:", err)
 	}
 }

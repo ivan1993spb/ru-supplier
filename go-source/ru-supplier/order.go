@@ -26,7 +26,7 @@ func ParseLow(str string) (OrderLaw, error) {
 	case strings.Contains(str, "94"):
 		return FZ94, nil
 	}
-	return -1, errors.New("Invalid or unknown law id")
+	return -1, errors.New("invalid or unknown law id")
 }
 
 type Price float64

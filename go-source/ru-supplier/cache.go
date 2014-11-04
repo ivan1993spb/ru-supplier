@@ -79,20 +79,20 @@ func LoadHashStoreSimple() *HashStore {
 	hs, err := LoadHashStore(_HASH_STORE_FILE_NAME)
 	if hs == nil {
 		if err != nil {
-			log.Fatal("cannot load hashstore:", err)
+			log.Fatal("Cannot load hashstore:", err)
 		} else {
-			panic("hashstore object is nil")
+			panic("Hashstore object is nil")
 		}
 	}
 	if err != nil {
-		log.Println("hashstore:", err)
+		log.Println("Hashstore:", err)
 	}
 	return hs
 }
 
 func LoadHashStore(fname string) (hs *HashStore, err error) {
 	if len(fname) == 0 {
-		panic("hashstore: invalid file name")
+		panic("Hashstore: invalid file name")
 	}
 	hs = &HashStore{fname, nil}
 	var file *os.File

@@ -100,6 +100,7 @@ var tmpl = template.Must(template.New("tmpl").Parse(`<!DOCTYPE html>
 	</body>
 </html>`))
 
+// MakeTitle makes order title
 func MakeTitle(order *Order) (title string) {
 	title = "№" + order.OrderId
 	if order.ExhibitionNumber > 0 {
@@ -108,6 +109,7 @@ func MakeTitle(order *Order) (title string) {
 	return
 }
 
+// MakeDescription makes description for passed order
 func MakeDescription(order *Order) string {
 	buff := bytes.NewBuffer(nil)
 	err := tmpl.Execute(buff, map[string]interface{}{
@@ -129,11 +131,12 @@ func MakeDescription(order *Order) string {
 		"Errors":           order.Errors,
 	})
 	if err != nil {
-		log.Println("template execution error:", err)
+		log.Println("Template execution error:", err)
 	}
 	return buff.String()
 }
 
+// MakeLink makes link with passed order ID
 func MakeLink(id string) string {
 	return fmt.Sprint("http://zakupki.gov.ru",
 		"/epz/order/quicksearch/update.html",
@@ -155,11 +158,13 @@ func MakeLink(id string) string {
 		"&isHeaderClick=&checkIds=")
 }
 
+// MakeShortLink makes short link
 func MakeShortLink(id, host string) string {
 	return fmt.Sprintf("http://%s/%s?order=%s", host,
 		strings.TrimLeft(_PATH_TO_SHORT_LINKS, "/"), id)
 }
 
+// LawIdToString converts OrderLaw to string
 func LawIdToString(law OrderLaw) string {
 	switch law {
 	case FZ44:
@@ -172,6 +177,7 @@ func LawIdToString(law OrderLaw) string {
 	return ""
 }
 
+// FormatPrice converts passed price to russian price format
 func FormatPrice(p Price) string {
 	price := float64(p)
 	kop := math.Mod(price*100, 100)
@@ -190,11 +196,11 @@ func FormatPrice(p Price) string {
 }
 
 type Render struct {
-	config *Config
+	config ServerConfig
 	feed   *feeds.RssFeed
 }
 
-func NewRender(config *Config) *Render {
+func NewRender(config ServerConfig) *Render {
 	return &Render{
 		config,
 		&feeds.RssFeed{
@@ -206,14 +212,15 @@ func NewRender(config *Config) *Render {
 
 func (r *Render) SetTitle(title string) {
 	if len(title) == 0 {
-		r.feed.Title = _DEFAULT_TITLE
+		if r.feed.Title != _DEFAULT_TITLE {
+			r.feed.Title = _DEFAULT_TITLE
+		}
 	} else {
 		r.feed.Title = title
 	}
 }
 
 func (r *Render) Compose(orders []*Order) {
-	r.feed.Items = r.feed.Items[:0]
 	if len(orders) > 0 {
 		r.feed.Items = make([]*feeds.RssItem, len(orders))
 		for i, order := range orders {
@@ -235,13 +242,6 @@ func (r *Render) WriteTo(w io.Writer) error {
 	if _, err := io.WriteString(w, xml.Header); err != nil {
 		return err
 	}
-	defer r.Clear()
 	// write data
 	return xml.NewEncoder(w).Encode(r.feed.FeedXml())
-}
-
-func (r *Render) Clear() {
-	r.feed.Title = _DEFAULT_TITLE
-	r.feed.Items = r.feed.Items[:0]
-	r.feed.Items = nil
 }

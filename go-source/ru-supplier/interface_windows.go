@@ -1,4 +1,5 @@
 // +build windows
+
 package main
 
 import (
@@ -52,7 +53,9 @@ const (
 	_NOTICE_PROXY_DISABLED   = "Локальный прокси остановлен"
 )
 
-func InterfaceStart(server *Server, config *Config) (err error) {
+func InterfaceStart(server ZakupkiProxyServer,
+	config ServerConfig) (err error) {
+
 	if server == nil {
 		panic("interface error: passed nil server")
 	}
@@ -166,7 +169,7 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	if err != nil {
 		return
 	}
-	err = filterEnableAction.SetVisible(!config.FilterEnabled)
+	err = filterEnableAction.SetVisible(!config.IsFilterEnabled())
 	if err != nil {
 		return
 	}
@@ -180,7 +183,7 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	if err != nil {
 		return
 	}
-	err = filterDisabledAction.SetVisible(config.FilterEnabled)
+	err = filterDisabledAction.SetVisible(config.IsFilterEnabled())
 	if err != nil {
 		return
 	}
@@ -296,7 +299,7 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	})
 
 	updateFilterButtons := func() {
-		if config.FilterEnabled {
+		if config.IsFilterEnabled() {
 			err = filterEnableAction.SetVisible(false)
 			if err != nil {
 				log.Println(err)
@@ -318,7 +321,7 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	}
 
 	filterEnableAction.Triggered().Attach(func() {
-		if !config.FilterEnabled {
+		if !config.IsFilterEnabled() {
 			config.SetFilterEnabled(true)
 			ni.ShowInfo(_PROG_TITLE, _NOTICE_ENABLED_FILTERS)
 		}
@@ -326,7 +329,7 @@ func InterfaceStart(server *Server, config *Config) (err error) {
 	})
 
 	filterDisabledAction.Triggered().Attach(func() {
-		if config.FilterEnabled {
+		if config.IsFilterEnabled() {
 			config.SetFilterEnabled(false)
 			ni.ShowInfo(_PROG_TITLE, _NOTICE_DISABLED_FILTERS)
 		}

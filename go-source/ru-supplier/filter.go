@@ -7,6 +7,10 @@ import (
 	"regexp"
 )
 
+type OrderFilter interface {
+	Execute([]*Order) ([]*Order, float32)
+}
+
 type ErrInvalidPattern struct {
 	err     error   // error with description
 	pattern Pattern // invalid pattern
@@ -90,9 +94,11 @@ type Filter struct {
 
 func LoadFilter(fname string) (filter *Filter, err error) {
 	if len(fname) == 0 {
-		panic("filter: invalid file name")
+		panic("Filter: invalid file name")
 	}
+
 	filter = &Filter{fname: fname}
+
 	var file *os.File
 	file, err = os.Open(fname)
 	if err != nil {
@@ -101,14 +107,18 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 		}
 		return
 	}
+
 	defer file.Close()
+
 	var patterns map[string]PatternSet
+
 	if err = json.NewDecoder(file).Decode(&patterns); err != nil {
 		if err == io.EOF {
 			err = nil
 		}
 		return
 	}
+
 	if _, ok := patterns["All"]; ok && len(patterns["All"]) > 0 {
 		filter.SetExpsAll(patterns["All"])
 	}
@@ -126,6 +136,7 @@ func LoadFilter(fname string) (filter *Filter, err error) {
 		len(patterns["OrganisationName"]) > 0 {
 		filter.SetExpsOrganisationName(patterns["OrganisationName"])
 	}
+
 	return filter, nil
 }
 
@@ -170,6 +181,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 	if count == 0 {
 		return orders, 0
 	}
+
 	// filter all fields
 	for _, exp := range f.All {
 		for i := 0; i < len(orders); {
@@ -183,7 +195,8 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 			}
 		}
 	}
-	// filter each fields
+
+	// filters for each field
 	for _, exp := range f.OrderName {
 		for i := 0; i < len(orders); {
 			if exp.MatchString(orders[i].OrderName) {
@@ -193,6 +206,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 			}
 		}
 	}
+
 	for _, exp := range f.OKDP {
 		for i := 0; i < len(orders); {
 			if exp.MatchString(orders[i].OKDP) {
@@ -202,6 +216,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 			}
 		}
 	}
+
 	for _, exp := range f.OKPD {
 		for i := 0; i < len(orders); {
 			if exp.MatchString(orders[i].OKPD) {
@@ -211,6 +226,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 			}
 		}
 	}
+
 	for _, exp := range f.OrganisationName {
 		for i := 0; i < len(orders); {
 			if exp.MatchString(orders[i].OrganisationName) {
@@ -220,6 +236,7 @@ func (f *Filter) Execute(orders []*Order) ([]*Order, float32) {
 			}
 		}
 	}
+
 	return orders, (1 - float32(len(orders))/float32(count))
 }
 

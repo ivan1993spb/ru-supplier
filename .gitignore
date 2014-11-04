@@ -1,14 +1,12 @@
 # Common
-*.exe
-*_test.go
-*.log
-*.json
+/*.exe
+/*.log
+/*.json
 
-# Extension files
-# certificates
+# Extension files:
+# 1. certificates:
 *.pem
-# extensions
+# 2. compiled extensions:
 *.crx
 *.nex
-# except extension manifests
-!browser-extensions/**/manifest.json
+
