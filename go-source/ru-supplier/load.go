@@ -75,7 +75,7 @@ var UserAgents = []string{
 
 func Load(rawurl string) (*http.Response, error) {
 	if len(rawurl) == 0 {
-		return nil, errors.New("can't load: passed empty url string")
+		return nil, errors.New("Can't load: passed empty url string")
 	}
 	URL, err := url.Parse(rawurl)
 	if err != nil {
@@ -83,27 +83,27 @@ func Load(rawurl string) (*http.Response, error) {
 	}
 
 	if !URL.IsAbs() {
-		return nil, errors.New("passed url isn't absolute")
+		return nil, errors.New("Passed url isn't absolute")
 	}
 	if URL.Scheme != _URL_REQUIRED_SCHEME {
-		return nil, errors.New("invalid url scheme")
+		return nil, errors.New("Invalid url scheme")
 	}
 	if URL.Host != _URL_REQUIRED_HOST {
-		return nil, errors.New("invalid url host")
+		return nil, errors.New("Invalid url host")
 	}
 	if URL.Path != _URL_REQUIRED_QUICK_SEARCH_PATH {
 		if URL.Path != _URL_REQUIRED_EXTENDED_SEARCH_PATH {
-			return nil, errors.New("invalid url path")
+			return nil, errors.New("Invalid url path")
 		}
 	}
 
-	// param sortBy defines type of sorting
+	// Param sortBy defines type of sorting
 	if URL.Query().Get("sortBy") != _URL_REQUIRED_SORTING_TYPE {
-		log.Println("result will not sorted by publish date!")
+		log.Println("Result will not sorted by publish date!")
 	}
-	// param sortDirection defines sorting direction
+	// Param sortDirection defines sorting direction
 	if URL.Query().Get("sortDirection") != _URL_REQUIRED_SORTING_DIRECTION {
-		log.Println("invalid sorting direction!")
+		log.Println("Invalid sorting direction!")
 	}
 	// This app is useful if and only if orders will sorted descending
 	// by publish date!

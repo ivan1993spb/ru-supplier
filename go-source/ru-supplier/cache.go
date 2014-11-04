@@ -94,7 +94,9 @@ func LoadHashStore(fname string) (hs *HashStore, err error) {
 	if len(fname) == 0 {
 		panic("Hashstore: invalid file name")
 	}
+
 	hs = &HashStore{fname, nil}
+
 	var file *os.File
 	file, err = os.Open(fname)
 	if err != nil {
@@ -104,6 +106,7 @@ func LoadHashStore(fname string) (hs *HashStore, err error) {
 		return
 	}
 	defer file.Close()
+
 	var data map[string]string
 	if err = json.NewDecoder(file).Decode(&data); err != nil {
 		if err == io.EOF {
@@ -111,6 +114,7 @@ func LoadHashStore(fname string) (hs *HashStore, err error) {
 		}
 		return
 	}
+
 	hs.data = make([]*HashPair, 0)
 	for url, chunk := range data {
 		hex_url, err := hex.DecodeString(url)
@@ -123,6 +127,7 @@ func LoadHashStore(fname string) (hs *HashStore, err error) {
 		}
 		hs.data = append(hs.data, &HashPair{hex_url, hex_chunk})
 	}
+
 	return
 }
 

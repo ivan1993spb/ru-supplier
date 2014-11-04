@@ -1,5 +1,5 @@
 
-/**
+/*
  * This file contains default preferences, and tools for
  * editing chrome extension preferences
  * 

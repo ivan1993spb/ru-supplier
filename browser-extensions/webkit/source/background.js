@@ -4,6 +4,7 @@
  * Show pageAction icon when was loaded search page on zakupki.gov.ru
  * 
  */
+
 chrome.webNavigation.onCommitted.addListener(function(e) {
 	chrome.pageAction.show(e.tabId);
 }, {

@@ -26,7 +26,7 @@ func ParseLow(str string) (OrderLaw, error) {
 	case strings.Contains(str, "94"):
 		return FZ94, nil
 	}
-	return -1, errors.New("invalid or unknown law id")
+	return -1, errors.New("Invalid or unknown law id")
 }
 
 type Price float64
@@ -95,7 +95,7 @@ const _CSV_FIELD_SEPARATOR = ';'
 
 func ParseOrder(rowbyte []byte) (*Order, error) {
 	if len(rowbyte) == 0 {
-		return nil, errors.New("passed empty rowbyte")
+		return nil, errors.New("Passed empty rowbyte")
 	}
 
 	for i := 0; i < len(rowbyte); i++ {
@@ -147,7 +147,7 @@ func ParseOrder(rowbyte []byte) (*Order, error) {
 					quoted = true
 				} else {
 					// quote inside unquoted field
-					return nil, errors.New("unexpected quote")
+					return nil, errors.New("Unexpected quote")
 				}
 			} else {
 				// append any char
@@ -155,12 +155,12 @@ func ParseOrder(rowbyte []byte) (*Order, error) {
 			}
 		} else {
 			// block is closed
-			return nil, errors.New("unexpected character")
+			return nil, errors.New("Unexpected character")
 		}
 	}
 
 	if field < _ORDER_COLUMN_COUNT-1 {
-		return nil, errors.New("bad field count")
+		return nil, errors.New("Bad field count")
 	}
 	return NewOrder(row), nil
 }

@@ -25,7 +25,7 @@ const (
 
 const (
 	_PROG_NAME    = "Внимательный Поставщик"
-	_PROG_VERSION = "2.0"
+	_PROG_VERSION = "2.1"
 	_PROG_TITLE   = _PROG_NAME + " " + _PROG_VERSION
 )
 
@@ -57,10 +57,10 @@ func InterfaceStart(server ZakupkiProxyServer,
 	config ServerConfig) (err error) {
 
 	if server == nil {
-		panic("interface error: passed nil server")
+		panic("InterfaceStart: passed nil server")
 	}
 	if config == nil {
-		panic("interface error: passed nil config")
+		panic("InterfaceStart: passed nil config")
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -72,7 +72,7 @@ func InterfaceStart(server ZakupkiProxyServer,
 			go func() {
 				// start server
 				if err := server.Start(); err != nil {
-					log.Println("cannot start server:", err)
+					log.Println("Cannot start server:", err)
 				}
 			}()
 			time.Sleep(_START_SERVER_TIMEOUT)
@@ -80,9 +80,9 @@ func InterfaceStart(server ZakupkiProxyServer,
 	}
 	stopServer := func() {
 		if server.IsRunning() {
-			// shut down server
+			// shutdown server
 			if err = server.ShutDown(); err != nil {
-				log.Println("cannot shut down server", err)
+				log.Println("Cannot shutdown server", err)
 			}
 		}
 	}
@@ -96,7 +96,7 @@ func InterfaceStart(server ZakupkiProxyServer,
 	}()
 	defer func() {
 		if err = config.Save(); err != nil {
-			log.Println("cannot save configures:", err)
+			log.Println("Cannot save configures:", err)
 		}
 	}()
 
@@ -124,11 +124,11 @@ func InterfaceStart(server ZakupkiProxyServer,
 	// create image icon
 	if icon, err :=
 		walk.NewIconFromFile(_PROG_ICON_FILE_NAME); err != nil {
-		log.Println("cannot load icon from file:", err)
+		log.Println("Cannot load icon from file:", err)
 	} else {
 		defer icon.Dispose()
 		if err = ni.SetIcon(icon); err != nil {
-			log.Println("cannot bind img with notify icon:", err)
+			log.Println("Cannot bind img with notify icon:", err)
 		}
 	}
 
@@ -338,7 +338,7 @@ func InterfaceStart(server ZakupkiProxyServer,
 
 	removeCacheAction.Triggered().Attach(func() {
 		if err = server.RemoveCache(); err != nil {
-			log.Println("cannot remove cache:", err)
+			log.Println("Cannot remove cache:", err)
 		} else {
 			ni.ShowInfo(_PROG_TITLE, _NOTICE_CACHE_REMOVED)
 		}
@@ -347,14 +347,14 @@ func InterfaceStart(server ZakupkiProxyServer,
 	openURLGenAction.Triggered().Attach(func() {
 		err = exec.Command(_PROG_URL_GENER_FILE_NAME).Start()
 		if err != nil {
-			log.Println("cannot open url generator:", err)
+			log.Println("Cannot open url generator:", err)
 		}
 	})
 
 	openDirAction.Triggered().Attach(func() {
 		err = exec.Command("cmd", "/C", "start", ".").Start()
 		if err != nil {
-			log.Println("cannot open program directory:", err)
+			log.Println("Cannot open program directory:", err)
 		} else {
 			ni.ShowInfo(_PROG_TITLE, _NOTICE_CONFIGS)
 		}
@@ -365,7 +365,7 @@ func InterfaceStart(server ZakupkiProxyServer,
 			"cmd", "/C", "start", _PROG_DESCRIPTION_FILE_NAME,
 		).Start()
 		if err != nil {
-			log.Println("cannot open README:", err)
+			log.Println("Cannot open README:", err)
 		}
 	})
 
@@ -378,5 +378,6 @@ func InterfaceStart(server ZakupkiProxyServer,
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 	mw.Run()
+
 	return
 }

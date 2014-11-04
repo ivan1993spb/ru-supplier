@@ -27,9 +27,8 @@ func main() {
 	if config == nil {
 		if err != nil {
 			log.Fatal("Cannot load configs:", err)
-		} else {
-			panic("Config object is nil")
 		}
+		panic("Config object is nil")
 	}
 	if err != nil {
 		log.Println("Config:", err)
@@ -39,9 +38,8 @@ func main() {
 	if filter == nil {
 		if err != nil {
 			log.Fatal("Cannot load filters:", err)
-		} else {
-			panic("Filter object is nil")
 		}
+		panic("Filter object is nil")
 	}
 	if err != nil {
 		log.Println("Filter:", err)

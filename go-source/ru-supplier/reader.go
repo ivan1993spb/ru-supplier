@@ -125,6 +125,7 @@ func (p *OrderReader) ReadOrders(resp *http.Response) (
 	return orders, nil
 }
 
+// RemoveCache are calling cache removing
 func (p *OrderReader) RemoveCache() error {
 	return p.HashStore.Remove()
 }

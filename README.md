@@ -7,7 +7,7 @@
 ### Ru-supplier ###
 
 * author: Pushkin Ivan
-* version 2.0
+* version 2.1
 * is written on [Golang](http://golang.org)
 * helps to monitor orders on zakupki.gov.ru
 * makes work with orders really faster
@@ -29,8 +29,8 @@ See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supp
 #!
 ./browser-extensions - contains extensions for url generation
 ./docs               - contains russian documentation
-./src                - contains icons, manifests and other
 ./go-source          - contains .go source files
+./src                - another files
 ```
 
 ### Compilation ###
@@ -49,7 +49,7 @@ C:\> cd path-to-ru-supplier
 C:\path-to-ru-supplier> make.bat
 ```
 
-After compilation you have to create local host in hosts file.
+After compilation you have to create local host in [hosts file](https://ru.wikipedia.org/wiki/Hosts).
 
 ### How it works ###
 1. go to the [http://zakupki.gov.ru](http://zakupki.gov.ru)
