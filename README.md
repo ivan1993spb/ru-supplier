@@ -7,7 +7,7 @@
 ### Ru-supplier ###
 
 * author: Pushkin Ivan
-* version 2.1
+* version: 2.1
 * is written on [Golang](http://golang.org)
 * helps to monitor orders on zakupki.gov.ru
 * makes work with orders really faster
