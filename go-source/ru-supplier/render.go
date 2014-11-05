@@ -236,6 +236,22 @@ func (r *Render) Compose(orders []*Order) {
 			}
 		}
 	}
+
+	// if len(orders) > 0 {
+	// 	r.feed.Items = make([]*feeds.RssItem, 0)
+	// 	for i := 0; i < len(orders); i++ {
+	// 		r.feed.Items = append(r.feed.Items, &feeds.RssItem{
+	// 			Title: MakeTitle(orders[i]),
+	// 			Link: MakeShortLink(
+	// 				orders[i].OrderId,
+	// 				r.config.HTTPHost(),
+	// 			),
+	// 			Description: MakeDescription(orders[i]),
+	// 			Author:      orders[i].OrganisationName,
+	// 			PubDate:     orders[i].PubDate.Format(time.RFC1123),
+	// 		})
+	// 	}
+	// }
 }
 
 func (r *Render) WriteTo(w io.Writer) error {

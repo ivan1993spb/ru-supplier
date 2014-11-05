@@ -73,6 +73,8 @@ func (s *Server) Start() (err error) {
 		log.Fatal("Server:", err)
 	}
 
+	log.Println("Server start up")
+
 	return http.Serve(s.lis, s)
 }
 
@@ -86,6 +88,8 @@ func (s *Server) ShutDown() error {
 	if s.lis == nil {
 		return nil
 	}
+
+	log.Println("Server shutdown")
 
 	defer func() {
 		s.lis = nil
@@ -140,7 +144,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 		// call feed like search request
 		render.SetTitle(URL.Query().Get("searchString"))
 	} else {
-		log.Println("getting feed title error:", err)
+		log.Println("Getting feed title error:", err)
 	}
 
 	if len(orders) > 0 {
@@ -148,7 +152,7 @@ func (s *Server) RSSHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render.WriteTo(w); err != nil {
-		log.Println("can't send response:", err)
+		log.Println("Can't send response:", err)
 	}
 
 	// signal that request was processed
