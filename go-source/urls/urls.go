@@ -8,8 +8,8 @@ const (
 	_URL_REQUIRED_ALIAS_HOST           = "www.zakupki.gov.ru"
 	_URL_REQUIRED_SORTING_TYPE         = "PUBLISH_DATE"
 	_URL_REQUIRED_SORTING_DIRECTION    = "false"
-	_URL_REQUIRED_QUICK_SEARCH_PATH    = "/epz/order/orderCsvSettings/quickSearch/download.html"
-	_URL_REQUIRED_EXTENDED_SEARCH_PATH = "/epz/order/orderCsvSettings/extendedSearch/download.html"
+	_URL_REQUIRED_QUICK_SEARCH_PATH    = "/epz/order/quicksearch/orderCsvSettings/quickSearch/download.html"
+	_URL_REQUIRED_EXTENDED_SEARCH_PATH = "/epz/order/extendedsearch/orderCsvSettings/extendedSearch/download.html"
 )
 
 var Paths = map[string]string{

@@ -10,7 +10,7 @@
 @echo off
 
 ::
-:: Printing Programm name, author, licence
+:: Printing programm name, author, licence agreement
 ::
 echo RU-SUPPLIER & echo.
 echo Author: Pushkin Ivan (pushkin13@bk.ru) & echo.
