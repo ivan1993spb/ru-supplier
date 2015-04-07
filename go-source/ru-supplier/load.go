@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -94,7 +95,7 @@ func Load(rawurl string) (*http.Response, error) {
 	}
 	if URL.Path != _URL_REQUIRED_QUICK_SEARCH_PATH {
 		if URL.Path != _URL_REQUIRED_EXTENDED_SEARCH_PATH {
-			return nil, errors.New("Invalid url path")
+			return nil, fmt.Errorf("Invalid url path: %q", URL.Path)
 		}
 	}
 
