@@ -1,6 +1,6 @@
 # Common
-/*.exe
-/*.log
+*.exe
+*.log
 /*.json
 
 # Extension files:
