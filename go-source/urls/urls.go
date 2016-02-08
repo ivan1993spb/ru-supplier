@@ -45,7 +45,7 @@ func generateURL(URL *url.URL, host string) *url.URL {
 	vals.Set("sortBy", _URL_REQUIRED_SORTING_TYPE)
 	vals.Set("sortDirection", _URL_REQUIRED_SORTING_DIRECTION)
 	vals.Set("userId", "null")
-	vals.Set("conf", "true;true;true;true;true;true;true;"+
+	vals.Set("conf", "true;true;true;true;true;true;true;true;"+
 		"true;true;true;true;true;true;true;true;true;true;")
 	URL.RawQuery = vals.Encode()
 
