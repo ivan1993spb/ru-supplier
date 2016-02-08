@@ -15,7 +15,8 @@ const (
 
 func main() {
 	if logfile, err := os.OpenFile(
-		fmt.Sprintf(_LOG_FILE_NAME_FORMAT, time.Now("2006-01-02")),
+		fmt.Sprintf(_LOG_FILE_NAME_FORMAT, time.Now().
+			Format("2006-01-02")),
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
 		os.ModePerm,
 	); err != nil {
