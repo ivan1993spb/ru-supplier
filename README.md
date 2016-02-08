@@ -1,7 +1,9 @@
 # Ru-supplier #
 
+Links
+
 * [Russian documentation](docs/index.html)
-* [Bitbucket repo](https://bitbucket.org/pushkin_ivan/ru-supplier)
+* [Bitbucket repo](https://github.com/ivan1993spb/ru-supplier)
 * [Pushkin Ivan](mailto://pushkin13@bk.ru)
 
 ### Ru-supplier ###
@@ -23,7 +25,7 @@
 * to cache last order
 
 ### Repo directories ###
-See [ru-supplier source on bitbucket](https://bitbucket.org/pushkin_ivan/ru-supplier) if you are interested in [Golang](http://golang.org)
+See [ru-supplier source on github](https://github.com/ivan1993spb/ru-supplier) if you are interested in [Golang](http://golang.org)
 
 ```
 #!

@@ -1,19 +1,21 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 const (
-	_LOG_FILE_NAME     = "prog.log"
-	_CONFIG_FILE_NAME  = "config.json"
-	_FILTERS_FILE_NAME = "filters.json"
+	_LOG_FILE_NAME_FORMAT = "prog_%s.log"
+	_CONFIG_FILE_NAME     = "config.json"
+	_FILTERS_FILE_NAME    = "filters.json"
 )
 
 func main() {
 	if logfile, err := os.OpenFile(
-		_LOG_FILE_NAME,
+		fmt.Sprintf(_LOG_FILE_NAME_FORMAT, time.Now("2006-01-02")),
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
 		os.ModePerm,
 	); err != nil {

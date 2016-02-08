@@ -3,7 +3,7 @@
 ::                                                       ::
 ::  Script for compilation of ru-supplier program        ::
 ::  Author: Pushkin Ivan <pushkin13@bk.ru>               ::
-::  Link: https://bitbucket.org/pushkin_ivan/ru-supplier ::
+::  Link: https://github.com/ivan1993spb/ru-supplier     ::
 ::                                                       ::
 :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: :: ::
 
