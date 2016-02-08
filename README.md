@@ -43,12 +43,11 @@ You have to download and install:
 * [Git](http://git-scm.com/downloads). You have to install console git version
 * [Mercurial](http://mercurial.selenic.com/wiki/Download)
 
-Then download this repo.
-
 ```
 #!
-C:\> cd path-to-ru-supplier
-C:\path-to-ru-supplier> make.bat
+C:\> git clone https://github.com/ivan1993spb/ru-supplier.git
+C:\> cd ru-supplier
+C:\ru-supplier> make.bat
 ```
 
 After compilation you have to create local host in [hosts file](https://ru.wikipedia.org/wiki/Hosts).
