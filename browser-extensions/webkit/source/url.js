@@ -221,7 +221,7 @@ var URLZakupkiGovRu = {
 			query.set("sortBy", "PUBLISH_DATE");
 			query.set("sortDirection", "false");
 			query.set("userId", "null");
-			query.set("conf", "true;true;true;true;true;true;true;" +
+			query.set("conf", "true;true;true;true;true;true;true;true;" +
 				"true;true;true;true;true;true;true;true;true;true;");
 			
 			url.search = query.toString();
