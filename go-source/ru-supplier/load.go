@@ -99,7 +99,7 @@ func Load(rawurl string) (*http.Response, error) {
 		}
 	}
 
-	log.Println("Loading:", URL)
+	log.Printf("Loading %q, url: %s\n", URL.Query().Get("searchString"), URL)
 
 	// Param sortBy defines type of sorting
 	if URL.Query().Get("sortBy") != _URL_REQUIRED_SORTING_TYPE {
