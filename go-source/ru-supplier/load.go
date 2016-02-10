@@ -99,6 +99,8 @@ func Load(rawurl string) (*http.Response, error) {
 		}
 	}
 
+	log.Println("Loading:", URL)
+
 	// Param sortBy defines type of sorting
 	if URL.Query().Get("sortBy") != _URL_REQUIRED_SORTING_TYPE {
 		log.Println("Result will not sorted by publish date!")
